@@ -105,12 +105,20 @@ parfor ii=1:size(freqbands,1)
     cfg.baselinewindow = baselinewindow;
     cfg.bpfilter = 'yes'; % NB: default butterworth for quick testing; specify more advanced filter for real analysis!
     cfg.bpfreq = freqbands(ii,:);
-    databp = ft_preprocessing(cfg,data);
+    cfg.hilbert = 'complex';
+    datahilb = ft_preprocessing(cfg,data);
     
     % filtering first then snipping to shorter time interval avoids edge artifacts
     cfg = [];
     cfg.toilim = toilim;
-    databp = ft_redefinetrial(cfg,databp);
+    datahilb = ft_redefinetrial(cfg,datahilb);
+
+    databp = datahilb;
+    for ii=1:length(databp.trial)
+        databp.trial{ii} = real(databp.trial{ii});
+    end
+    
+    
 
     cfgtl                  = [];
     cfgtl.covariance       = 'yes';
@@ -119,8 +127,6 @@ parfor ii=1:size(freqbands,1)
     timelockbp{ii}           = ft_timelockanalysis(cfgtl, databp);
 
     cfghilb=[];
-    cfghilb.hilbert = 'complex';
-    cfghilb.toilim = toilim;
     datahilb{ii} = ft_preprocessing(cfghilb,data);
     
     cfg = [];
