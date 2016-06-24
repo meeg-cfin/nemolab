@@ -63,6 +63,7 @@ else
         otherwise
             error('unknown segmentation method requested')
     end
+    save([basepath '/seg_' cfgnemo.segmethod '.mat'],'seg');
 end
 
 %%

@@ -36,9 +36,16 @@ baselinewindow = [-0.225 -0.025];  % <====== MUST be customized for particular e
 %freqbands = [1 145; 8 13; 13 30; 30 45; 55 75; 75 95; 105 130; 130 145; 155 195];
 freqbands = [30 45; 55 75; 75 95; 105 130; 130 145];
 tfstats = 0; % NB: tfstats takes a lot of resources!!
+
 cfgnemo.segmethod = 'ftvolseg';
+cfgnemo.gridresolution = 10;
 cfgnemo.voxelgridtype = 'mni-ft';
 cfgnemo.headmodelstrategy =  'openmeeg';
+
+load('standard_sourcemodel3d10mm'); % loads in sourcemodel (i.e., MNI voxel grid)
+cfgnemo.sourcemodel = ft_convert_units(sourcemodel,'mm');
+
+
 cfgnemo.numlayers = 3; % 3 for 3-layer, 4 for 4-layer
 cfgnemo.plotvol = 1; % plot surfaces with sensor positions as a check
 saveRAM = false; % try to delete mega-matrices after they're no longer needed
@@ -56,10 +63,14 @@ switch(cwd)
         ergchan = 'E37';
     case 'files' % Aarhus Elekta test
         load data
-        cfgnemo.megchans = 'MEG';
+        cfgnemo.megchans = {'MEG'};
         ergchan = 'EOG001';
 end
-megergchans = {cfgnemo.megchans ergchan};
+megergchans = {cfgnemo.megchans{:} ergchan};
+
+% hack to work around new fieldtrip bug that doesn't like 'unknown' units
+% on reference channel
+data.grad.chanunit(find(strcmp(data.grad.chanunit,'unknown')))={'T'}
 
 cfg = [];
 cfg.resamplefs = [576];
@@ -78,8 +89,9 @@ cfgnemo.grad_mri.coordsys = 'spm';
 
 %%
 cfgnemo.bnd = bnd;
-cfgnemo.headmodelstrategy = 'bemcp';
-grid = nemo_makeleadfield(cfgnemo);
+%cfgnemo.headmodelstrategy = 'bemcp';
+cfgnemo.headmodelstrategy = 'openmeeg';
+[leadgrid,vol] = nemo_makeleadfield(cfgnemo);
 
 
 
@@ -121,8 +133,8 @@ parfor ii=1:size(freqbands,1)
     cfg                   = [];
     cfg.channel           = cfgnemo.megchans;
     cfg.method            = 'lcmv';
-    cfg.grid              = grid; % leadfield, which has the grid information
-    cfg.vol               = vol; % volume conduction model (headmodel)
+    cfg.grid              = leadgrid; % leadfield, which has the grid information
+    cfg.vol               = vol; % volume conduction model (headmodel) <-- FIXME: ft_sourceanalysis insists on this even if not necessary (i.e., grid already computed)
     cfg.keepfilter        = 'yes';
     cfg.lcmv.reducerank   = 'no';
     cfg.lcmv.fixedori     = 'yes'; % project on axis of most variance using SVD
@@ -163,7 +175,7 @@ timelockhilb{ii}.covariance = timelockbp{ii}.covariance;
 cfg                   = [];
 cfg.channel           = channel;
 cfg.method            = 'lcmv';
-cfg.grid              = grid; % leadfield, which has the grid information
+cfg.grid              = leadgrid; % leadfield, which has the grid information
 cfg.vol               = vol; % volume conduction model (headmodel)
 cfg.keepfilter        = 'yes';
 cfg.lcmv.reducerank   = 'no';
@@ -198,8 +210,9 @@ for jj = 1:size(freqbands,1)
         end
     end
 end
-source_tf.pos = sourcemodel.pos; % supply MNI pos
+source_tf.pos = cfgnemo.sourcemodel.pos; % supply MNI pos
 source_tf.coordsys = 'mni';
 
+save source_tf source_tf
 %%
 nemo_plotsourcetf

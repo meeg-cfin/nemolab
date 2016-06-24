@@ -1,5 +1,4 @@
-function grid = nemo_makeleadfield(cfgnemo)
-gridresolution = 10
+function [grid,vol] = nemo_makeleadfield(cfgnemo)
 
 %% headmodel
 
@@ -22,7 +21,7 @@ switch(cfgnemo.headmodelstrategy)
 
         
     case 'openmeeg'
-                cfg                       = [];
+        cfg                       = [];
         subjId = ['test_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
         vol.bnd = cfgnemo.bnd;
         switch(cfgnemo.numlayers)
@@ -63,9 +62,7 @@ switch(cfgnemo.headmodelstrategy)
         
         % create the subject specific grid, using the template grid that has just been created
         cfg.grid.warpmni   = 'yes';
-        load standard_sourcemodel3d10mm; % loads in sourcemodel (i.e., MNI voxel grid)
-        sourcemodel  = ft_convert_units(sourcemodel,'mm');
-        cfg.grid.template = sourcemodel;
+        cfg.grid.template = cfgnemo.sourcemodel;
         cfg.grid.nonlinear = 'yes'; % use non-linear normalization
         cfg.mri            = cfgnemo.mri;
         clear mri
@@ -90,11 +87,7 @@ switch(cfgnemo.headmodelstrategy)
             case 'mni-ft'
                 % create the subject specific grid, using the template grid that has just been created
                 cfg.grid.warpmni   = 'yes';
-                %standard_sourcemodel3d5mm;  % in cm!!!!
-                load standard_sourcemodel3d10mm; % loads in sourcemodel (i.e., MNI voxel grid)
-                %            load template_grid; sourcemodel = template_grid;
-                sourcemodel  = ft_convert_units(sourcemodel,'mm');
-                cfg.grid.template = sourcemodel;
+                cfg.grid.template = cfgnemo.sourcemodel;
                 cfg.grid.nonlinear = 'yes'; % use non-linear normalization
                 cfg.mri            = cfgnemo.mri;
                 cfg.grid.unit = 'mm',
@@ -119,4 +112,3 @@ switch(cfgnemo.headmodelstrategy)
         end
 end
 
-cfg = [];
