@@ -70,8 +70,8 @@ switch(cwd)
 end
 megergchans = {cfgnemo.megchans{:} ergchan};
 
-% hack to work around new fieldtrip bug that doesn't like 'unknown' units
-% on reference channel
+% older saved data lists the chanunit as 'unknown' for reference channels,
+% which breaks some FT functions; replace them with 'T'
 data.grad.chanunit(find(strcmp(data.grad.chanunit,'unknown')))={'T'}
 
 cfg = [];
