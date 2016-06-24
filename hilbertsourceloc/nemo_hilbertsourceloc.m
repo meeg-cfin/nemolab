@@ -30,6 +30,10 @@
 % - for testing: create test source structures to ensure that nutmegtrip doesn't break for a particular type of data
 %                including: lead field plotting, topography plotting, etc.
 
+%%
+nemo_ftsetup  % add paths etc.
+
+%% user-defined parameters
 toilim = [-0.225 0.25];  % <====== MUST be customized for particular experiment!! ****************
 baselinewindow = [-0.225 -0.025];  % <====== MUST be customized for particular experiment!! ****************
 % first band is for ERF
@@ -50,8 +54,6 @@ cfgnemo.numlayers = 3; % 3 for 3-layer, 4 for 4-layer
 cfgnemo.plotvol = 1; % plot surfaces with sensor positions as a check
 saveRAM = false; % try to delete mega-matrices after they're no longer needed
 
-%%
-nemo_ftsetup  % add paths etc.
 
 
 %% load and resample data
