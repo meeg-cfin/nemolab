@@ -120,14 +120,16 @@ parfor ii=1:size(freqbands,1)
 
     cfghilb=[];
     cfghilb.hilbert = 'complex';
-    datahilb{ii} = ft_preprocessing(cfghilb,databp);
+    cfghilb.toilim = toilim;
+    datahilb{ii} = ft_preprocessing(cfghilb,data);
     
     cfg = [];
     cfg.channel = ergchan;
     erghilb{ii} = ft_preprocessing(cfg,datahilb{ii});
 end
-clear databp
-
+if(saveRAM)
+    clear data databp
+end
 
 
 %% create spatial filter using the non-Hilbert data
@@ -200,7 +202,7 @@ end
 %% assembles source_hilb{:} into a composite source_tf structure
 source_tf=source_hilb{1};
 source_tf.freqbands = freqbands(1:end,:);
-source_tf.freqbands(1,:) = [0 0]; % first "band" is actually ERF, this tells the viewer to handle it properly
+%source_tf.freqbands(1,:) = [0 0]; % first "band" is actually ERF, this tells the viewer to handle it properly
 source_tf.freq = mean(source_tf.freqbands'); % TODO: is this needed for anything??
 for jj = 1:size(freqbands,1)
     for ii=1:length(inside_idx)

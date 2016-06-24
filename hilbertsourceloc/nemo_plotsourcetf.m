@@ -15,7 +15,7 @@ cfg.funparameter = 'avg.mom';
 cfg.evokedoverlay = 1;
 % cfg.plottype = 'ts';  % if you want to view as time series instead
 cfg.atlas = ft_read_atlas('ROI_MNI_V4.nii'); % AAL atlas
-nmt_sourceplot_spm8(cfg,ft_convert_units(source_tf,'mm'));
+nmt_sourceplot(cfg,ft_convert_units(source_tf,'mm'));
 
 
 
