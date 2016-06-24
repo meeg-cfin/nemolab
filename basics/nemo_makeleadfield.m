@@ -71,7 +71,7 @@ switch(cfgnemo.headmodelstrategy)
         cfg.vol                   = ft_convert_units(vol,'mm');
         cfg.megchans = cfgnemo.megchans;
         cfg.reducerank = 'no';
-        cfg.grid.resolution = gridresolution;
+        cfg.grid.resolution = cfgnemo.gridresolution;
         grid               = ft_prepare_leadfield(cfg);
         
 
@@ -96,7 +96,7 @@ switch(cfgnemo.headmodelstrategy)
                 cfg.vol                   = ft_convert_units(vol,'mm');
                 cfg.megchans = cfgnemo.megchans;
                 cfg.reducerank = 'no';
-                cfg.grid.resolution = gridresolution;
+                cfg.grid.resolution = cfgnemo.gridresolution;
                 cfg.grad                  = ft_convert_units(cfgnemo.grad_mri,'mm'); % SI units
                 cfg.megchans = cfgnemo.megchans;
                 cfg.reducerank = 'no';
