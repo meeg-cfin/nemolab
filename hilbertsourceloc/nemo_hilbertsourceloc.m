@@ -52,7 +52,7 @@ cfgnemo.sourcemodel = ft_convert_units(sourcemodel,'mm');
 
 cfgnemo.numlayers = 3; % 3 for 3-layer, 4 for 4-layer
 cfgnemo.plotvol = 1; % plot surfaces with sensor positions as a check
-saveRAM = false; % try to delete mega-matrices after they're no longer needed
+saveRAM = true; % try to delete mega-matrices after they're no longer needed
 
 
 
@@ -65,10 +65,15 @@ switch(cwd)
         ergchan = 'E37';
     case 'files' % Aarhus Elekta test
         load data
+        
         cfgnemo.megchans = {'MEG'};
         ergchan = 'EOG001';
+        
+        cfgnemo.megchans = 13:318;
+        ergchan = 1;
 end
-megergchans = {cfgnemo.megchans{:} ergchan};
+%megergchans = {cfgnemo.megchans{:} ergchan};
+megergchans = [ergchan cfgnemo.megchans];
 
 % older saved data lists the chanunit as 'unknown' for reference channels,
 % which breaks some FT functions; replace them with 'T'
@@ -106,16 +111,16 @@ parfor ii=1:size(freqbands,1)
     cfg.bpfilter = 'yes'; % NB: default butterworth for quick testing; specify more advanced filter for real analysis!
     cfg.bpfreq = freqbands(ii,:);
     cfg.hilbert = 'complex';
-    datahilb = ft_preprocessing(cfg,data);
+    datahilb{ii} = ft_preprocessing(cfg,data);
     
     % filtering first then snipping to shorter time interval avoids edge artifacts
     cfg = [];
     cfg.toilim = toilim;
-    datahilb = ft_redefinetrial(cfg,datahilb);
+    datahilb{ii} = ft_redefinetrial(cfg,datahilb{ii});
 
-    databp = datahilb;
-    for ii=1:length(databp.trial)
-        databp.trial{ii} = real(databp.trial{ii});
+    databp = datahilb{ii};
+    for jj=1:length(databp.trial)
+        databp.trial{jj} = real(databp.trial{jj});
     end
     
     
@@ -126,9 +131,6 @@ parfor ii=1:size(freqbands,1)
     cfgtl.vartrllength     = 2;
     timelockbp{ii}           = ft_timelockanalysis(cfgtl, databp);
 
-    cfghilb=[];
-    datahilb{ii} = ft_preprocessing(cfghilb,data);
-    
     cfg = [];
     cfg.channel = ergchan;
     erghilb{ii} = ft_preprocessing(cfg,datahilb{ii});

@@ -1,6 +1,6 @@
 % perform stats on Hilbert source data
-baselinewindow_idx = dsearchn(source_hilbtmp{1}.time',baselinewindow');
-inside_idx = find(source_hilbtmp{1}.inside);
+baselinewindow_idx = dsearchn(source_hilbtmp{ii}.time',baselinewindow');
+inside_idx = find(source_hilbtmp{ii}.inside);
 
 %%
 disp(freqbands(ii,:));
@@ -55,3 +55,5 @@ if(tfstats)
         source_hilb{ii}.pval{inside_idx(jj)} = log10(p(jj,:));
     end
 end
+
+clear trials zval p aa aph phvar
