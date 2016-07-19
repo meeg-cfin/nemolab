@@ -36,15 +36,16 @@ nemo_ftsetup  % add paths etc.
 %% user-defined parameters
 toilim = [-0.225 0.25];  % <====== MUST be customized for particular experiment!! ****************
 baselinewindow = [-0.225 -0.025];  % <====== MUST be customized for particular experiment!! ****************
-% first band is for ERF
+% first band can be wideband; e.g., for ERF
 %freqbands = [1 145; 8 13; 13 30; 30 45; 55 75; 75 95; 105 130; 130 145; 155 195];
 freqbands = [30 45; 55 75; 75 95; 105 130; 130 145];
-tfstats = 0; % NB: tfstats takes a lot of resources!!
+tfstats = 1; % NB: tfstats may take lots of resources!!
 
 cfgnemo.segmethod = 'ftvolseg';
-cfgnemo.gridresolution = 10;
 cfgnemo.voxelgridtype = 'mni-ft';
 cfgnemo.headmodelstrategy =  'openmeeg';
+cfgnemo.sourceplottype = 'fancy';
+cfgnemo.VOeyes = 1; % include eyes in VOI
 
 load('standard_sourcemodel3d10mm'); % loads in sourcemodel (i.e., MNI voxel grid)
 cfgnemo.sourcemodel = ft_convert_units(sourcemodel,'mm');
@@ -66,14 +67,17 @@ switch(cwd)
     case 'files' % Aarhus Elekta test
         load data
         
-        cfgnemo.megchans = {'MEG'};
-        ergchan = 'EOG001';
+        cfgnemo.megchans = {'MEGMAG'};
         
-        cfgnemo.megchans = 13:318;
-        ergchan = 1;
+%         cfg = [];
+%         cfg.channel = cfgnemo.megchans;
+%         cfg.dftfreq = 'yes';
+%         data = ft_preprocessing(cfg,data);
+        
+        ergchan = 'EOG001';
 end
-%megergchans = {cfgnemo.megchans{:} ergchan};
-megergchans = [ergchan cfgnemo.megchans];
+megergchans = {cfgnemo.megchans{:} ergchan};
+
 
 % older saved data lists the chanunit as 'unknown' for reference channels,
 % which breaks some FT functions; replace them with 'T'
@@ -96,8 +100,6 @@ cfgnemo.grad_mri.coordsys = 'spm';
 
 %%
 cfgnemo.bnd = bnd;
-%cfgnemo.headmodelstrategy = 'bemcp';
-cfgnemo.headmodelstrategy = 'openmeeg';
 [leadgrid,vol] = nemo_makeleadfield(cfgnemo);
 
 
@@ -129,6 +131,7 @@ parfor ii=1:size(freqbands,1)
     cfgtl.covariance       = 'yes';
     cfgtl.covariancewindow = 'all';  % may need to change if not desirable to include pre-stim interval
     cfgtl.vartrllength     = 2;
+    cfgtl.keeptrials       = 'yes';
     timelockbp{ii}           = ft_timelockanalysis(cfgtl, databp);
 
     cfg = [];
@@ -144,15 +147,17 @@ end
 parfor ii=1:size(freqbands,1)
     cfg                   = [];
     cfg.channel           = cfgnemo.megchans;
-    cfg.method            = 'lcmv';
     cfg.grid              = leadgrid; % leadfield, which has the grid information
     cfg.vol               = vol; % volume conduction model (headmodel) <-- FIXME: ft_sourceanalysis insists on this even if not necessary (i.e., grid already computed)
     cfg.keepfilter        = 'yes';
-    cfg.lcmv.reducerank   = 'no';
-    cfg.lcmv.fixedori     = 'yes'; % project on axis of most variance using SVD
-    cfg.lcmv.projectnoise = 'yes';
-    cfg.lcmv.weightnorm   = 'nai'; %% NOTE: this is crucial for good performance!!! (noise-scaled version of old 'weightnorm')
-    cfg.lcmv.keepfilter   = 'yes';
+%    cfg.method            = 'sloreta'; cfg.sloreta.lambda = '1000%';
+     cfg.method            = 'lcmv';
+    cfg.(cfg.method).reducerank   = 'no';
+    cfg.(cfg.method).fixedori     = 'yes'; % project on axis of most variance using SVD
+    cfg.(cfg.method).projectnoise = 'yes';
+%    cfg.(cfg.method).weightnorm   = 'lfnorm'; %% NOTE: nai or lfnorm seems crucial for good performance!
+    cfg.(cfg.method).weightnorm   = 'nai'; %% NOTE: nai or lfnorm seems crucial for good performance!
+    cfg.(cfg.method).keepfilter   = 'yes';
     %    cfg.lcmv.lambda      = '10%';
     source_bp{ii}         = ft_sourceanalysis(cfg, timelockbp{ii}); % high-frequencies only
 end
@@ -164,7 +169,9 @@ for ii=1:size(freqbands,1)
     % change to ordinary "for" if parfor claims "Attempt to serialize data which is too large."
     source_hilbtmp{ii} = ft_apply_spatialfilter(datahilb{ii},source_bp{ii});
     
-    datahilb{ii} = []; % don't use "clear" since this is a for loop!!
+    if(saveRAM)
+        datahilb{ii} = []; % don't use "clear" since this is a for loop!!
+    end
     
     % perform stats on Hilbert source trials
     nemo_hilbertstats
@@ -221,6 +228,7 @@ for jj = 1:size(freqbands,1)
             source_tf.pval{inside_idx(ii)}(jj,:)=source_hilb{jj}.pval{inside_idx(ii)};
         end
     end
+    source_tf.avg.covcond(jj)=source_hilb{jj}.avg.covcond;
 end
 source_tf.pos = cfgnemo.sourcemodel.pos; % supply MNI pos
 source_tf.coordsys = 'mni';

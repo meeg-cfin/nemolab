@@ -56,59 +56,33 @@ end
 % prepare MNI voxel list
 cfg                       = [];
 cfg.grad                  = cfgnemo.grad_mri; % mm
+cfg.vol                   = ft_convert_units(vol,'mm');
+cfg.reducerank = 'no';
 
-switch(cfgnemo.headmodelstrategy)
-    case {'singleshell','dipoli','bemcp'}        
-        
-        % create the subject specific grid, using the template grid that has just been created
-        cfg.grid.warpmni   = 'yes';
-        cfg.grid.template = cfgnemo.sourcemodel;
-        cfg.grid.nonlinear = 'yes'; % use non-linear normalization
-        cfg.mri            = cfgnemo.mri;
-        clear mri
-        cfg.unit = 'mm',
-        
-        cfg.vol                   = ft_convert_units(vol,'mm');
-        cfg.megchans = cfgnemo.megchans;
-        cfg.reducerank = 'no';
-        cfg.grid.resolution = cfgnemo.gridresolution;
-        grid               = ft_prepare_leadfield(cfg);
-        
-
-    case 'openmeeg'
-        switch(cfgnemo.voxelgridtype)
-            case 'subjectspace'
-                cfg.vol                   = ft_convert_units(vol,'mm');
-                cfg.grid.resolution       = 10; % use 10mm for quick look; 5 for final computation
-                cfg.grid.unit             = 'mm';
-                cfg.megchans = megchans;
-                cfg.reducerank = 'no';
-                grid=ft_prepare_leadfield(cfg);
-            case 'mni-ft'
-                % create the subject specific grid, using the template grid that has just been created
-                cfg.grid.warpmni   = 'yes';
-                cfg.grid.template = cfgnemo.sourcemodel;
-                cfg.grid.nonlinear = 'yes'; % use non-linear normalization
-                cfg.mri            = cfgnemo.mri;
-                cfg.grid.unit = 'mm',
-                %    gridmni               = ft_prepare_sourcemodel(cfg);
-                
-                cfg.vol                   = ft_convert_units(vol,'mm');
-                cfg.megchans = cfgnemo.megchans;
-                cfg.reducerank = 'no';
-                cfg.grid.resolution = cfgnemo.gridresolution;
-                cfg.grad                  = ft_convert_units(cfgnemo.grad_mri,'mm'); % SI units
-                cfg.megchans = cfgnemo.megchans;
-                cfg.reducerank = 'no';
-                grid               = ft_prepare_leadfield(cfg);
-                
-                
-                
-            case 'mni-nm'
-                % TEST NEEDED: does this work at all? is it compatible with NMT plotting?
-                load template_grid
-                grid = template_grid;
-                grid.pos = nut_mni2mri(template_grid.pos);
-        end
+if(1) % new way: load pre-normalized MRI and determine grid positions from it
+    params = load('sSSD_sn.mat');
+    cfg.grid.pos = ft_warp_apply(params, cfgnemo.sourcemodel.pos, 'sn2individual');
+else
+    % create the subject specific grid, using the template grid that has just been created
+    cfg.grid.warpmni   = 'yes';
+    cfg.grid.template = cfgnemo.sourcemodel;
+    cfg.grid.nonlinear = 'yes'; % use non-linear normalization
+    %cfg.grid.resolution = cfgnemo.gridresolution;
+    cfg.grid.unit = 'mm',
+    cfg.mri            = cfgnemo.mri;
 end
+
+if(cfgnemo.VOeyes) % add eyes to "inside" grid
+    cfg.grid = ft_prepare_sourcemodel(cfg); % this computes the grid.inside manually
+    
+    [x,y,z]=meshgrid(-50:50,45:75,-55:-25); % corresponds to eye region in MNI
+    eye_xyz = [x(:) y(:) z(:)];
+    
+    [~,eye_idx]=intersect(cfgnemo.sourcemodel.pos,eye_xyz,'rows');
+    cfg.grid.inside(eye_idx) = 1;
+end
+
+% cfg.channel = cfgnemo.megchans;
+
+grid               = ft_prepare_leadfield(cfg);
 

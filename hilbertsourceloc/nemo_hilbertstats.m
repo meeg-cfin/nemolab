@@ -25,7 +25,8 @@ source_hilb{ii} = source_bp{ii}; % initialize source_hilb
 source_hilb{ii}.avg.itc = source_hilb{ii}.avg.mom; % initialize itc
 for jj=1:length(inside_idx)
     source_hilb{ii}.avg.itc{inside_idx(jj)} = 1 - phvar(jj,:);
-    source_hilb{ii}.avg.mom{inside_idx(jj)} = aameannorm(jj,:);
+%    source_hilb{ii}.avg.mom{inside_idx(jj)} = aameannorm(jj,:);
+    source_hilb{ii}.avg.mom{inside_idx(jj)} = aamean(jj,:);
 end
 
 if(tfstats)
@@ -34,18 +35,30 @@ if(tfstats)
     zval = zeros(size(aa,2),size(aa,3));
 %     pks = p; ksval = zval;
     
-    ft_progress('init','etf');
-    for jj=1:size(aa,2)
-        aabl = squeeze(aa(:,jj,baselinewindow_idx(1):baselinewindow_idx(2)));
-        aabl = aabl(:);
-        parfor kk=1:size(aa,3)
-            [p(jj,kk),~,stats]=ranksum(aa(:,jj,kk),aabl);
-            zval(jj,kk)=stats.zval;
-%             [~,pks(jj,kk),ksval(jj,kk)] = kstest2(aa(:,jj,kk),aabl);
-        end
-        ft_progress(jj/size(aa,2),'%d of %d',jj,size(aa,2));
+    switch('signrank')
+        case 'ranksum'  % this is slow and perhaps not necessary...
+            ft_progress('init','etf');
+            for jj=1:size(aa,2)
+                aabl = squeeze(aa(:,jj,baselinewindow_idx(1):baselinewindow_idx(2)));
+                aabl = aabl(:);
+                parfor kk=1:size(aa,3)
+                    [p(jj,kk),~,stats]=ranksum(aa(:,jj,kk),aabl);
+                    zval(jj,kk)=stats.zval;
+                    %             [~,pks(jj,kk),ksval(jj,kk)] = kstest2(aa(:,jj,kk),aabl);
+                end
+                ft_progress(jj/size(aa,2),'%d of %d',jj,size(aa,2));
+            end
+            ft_progress('close');
+        case 'signrank'  % fast (!) and good (?)
+            aabl = squeeze(mean(aa(:,:,baselinewindow_idx(1):baselinewindow_idx(2)),3)); % single-trial means of baseline window per voxel
+            Nsamples = size(aa,3); % need to pre-define to make 'parfor' happy...
+            parfor jj=1:size(aa,2) % Nvoxels
+                for kk=1:Nsamples
+                    [p(jj,kk),~,stats]=signrank(aa(:,jj,kk),aabl(:,jj));
+                    zval(jj,kk)=stats.zval;
+                end
+            end
     end
-    ft_progress('close');
     
     source_hilb{ii}.stat = source_hilb{ii}.avg.mom; % initialize with 'mom' since it's the same size
     source_hilb{ii}.pval = source_hilb{ii}.stat;

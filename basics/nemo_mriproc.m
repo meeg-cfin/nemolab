@@ -39,7 +39,7 @@ mri = ft_read_mri(mripath,'dataformat','nifti');
 mri.coordsys = 'spm';
 
 
-%% MRI processing
+%% transform MEG to MRI space
 grad = data.grad;  % NOTE data.hdr.grad does not contain correct information if synthetic gradient has been manipulated above
 grad_mm = ft_convert_units(grad,'mm'); % transforms the grad units (m) to the same than mri (mm)
 grad_mri = ft_transform_sens(coreg.meg2mri_tfm, grad_mm); % transforms the grad coordinates to mri coordinates
@@ -115,3 +115,44 @@ else
 end
 
 cfgnemo.mri = mri;
+
+%% Spatial normalization via SPM
+%
+% if using SPM12, SPM12/toolbox/OldNorm needed in path
+% TODO: try out SPM12's DARTEL normalization
+
+if(~exist(normmripath,'file'))
+    cfg = [];
+    tmpcfg.nonlinear = 'yes';
+    spmdir = fileparts(which ('spm'));
+    tmpcfg.spmversion = spm('ver');
+    switch(spm('ver'))
+        case 'SPM8'
+            tmpcfg.template = [spmdir '/templates/T1.nii'];
+        case 'SPM12'
+            tmpcfg.template = [spmdir '/toolbox/OldNorm/T1.nii'];
+            addpath([spmdir '/toolbox/OldNorm']);
+        otherwise
+            error('unknown SPM version')
+    end
+    
+    
+    spm_figure('Create','Graphics');
+    spm_figure('Redraw');
+%     tmpcfg.write = 'yes';
+%     tmpcfg.name = normmripath;
+%     normalise = ft_volumenormalise(tmpcfg, mri);
+    
+    templateweight = [];  % optional mask
+    mriweight = []; % <---- optional mask, useful for abnormal MRIs
+    
+    snname = 'sSSD_sn.mat';
+    
+    params = spm_normalise(tmpcfg.template,...
+        mripath, snname,templateweight, mriweight);
+    rflags = [];
+    rflags.bb = [-85 -120 -60; 85 85 95]; % adjust bounding box, if desired
+    
+    spm_write_sn(mripath, params, rflags);
+end
+    
