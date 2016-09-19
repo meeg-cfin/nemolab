@@ -11,18 +11,13 @@
 
 freqbands = [55 75; 75 95; 105 125; 125 145];
 
-% specs for firws filter:
-tswidth = 6;
-
 baselinewindow = [-.15 -.02];
 toilim  = [-.15 .25]
 
 stim = 'off';
 filtertype = 'firws'; % 'but' or 'firws'
-
-
 % specs for firws filter:
-tswidth = 6;
+tswidth = 6;   % transition width for FIR filter
 
 if(strcmp(stim, 'on'))
     data = dataon_clean;              % data already loaded - adjust for your needs. This is preprocessed + downsampled sensorlevel data.
@@ -34,8 +29,8 @@ else
     error('unknown stimulus condition!')
 end
 
-saving = 1;     % should data be saved?
-plotting = 0;   % should results be plotted?
+saving = 0;     % should data be saved?
+plotting = 1;   % should results be plotted?
 
 %% run through filter bank, and obtain timelock and hilbert transform
 
@@ -132,7 +127,7 @@ data_tf.pval = data_tf.avg;
 
 data_tf.freqbands = freqbands;
 
-data_tf.freq = mean(data_tf.freq'); % This is needed if output should be plotted with fieldtrip's plotting functions - ft_singleplotTFR or ft_multiplotTFR
+data_tf.freq = mean(data_tf.freqbands'); % This is needed if output should be plotted with fieldtrip's plotting functions - ft_singleplotTFR or ft_multiplotTFR
 for jj = 1:size(freqbands,1)
     data_tf.avg(:,jj,:)=reshape(data_hilbert{jj}.avg, numel(data_hilbert{1}.label), 1, size(data_hilbert{1}.time, 2));
     data_tf.itc(:,jj,:)=reshape(data_hilbert{jj}.itc, numel(data_hilbert{1}.label), 1, size(data_hilbert{1}.time, 2));

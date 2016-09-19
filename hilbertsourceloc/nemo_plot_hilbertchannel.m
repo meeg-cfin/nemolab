@@ -117,7 +117,8 @@ clims = max(abs([cmin, cmax]));    % automatically center zero on color bar
 
 freqs = reshape(data_tf.freqbands',1,size(data_tf.freqbands,1)*2);
 
-h=mesh(data_tf.time, freqs, datplot);
+h=surf(data_tf.time, freqs, datplot);
+shading interp
 view(gca, 2)
 set(h, 'linewidth', 2);
 title(cfg.channel, 'FontSize', 18);
