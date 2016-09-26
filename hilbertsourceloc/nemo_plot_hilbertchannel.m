@@ -1,6 +1,6 @@
-function plot_hilbertchannel(cfg, data_tf)
+function nemo_plot_hilbertchannel(cfg, data_tf)
 
-% PLOT_HILBERTCHANNEL plots the output of nemo_hilberstats_sensorlevel as TFR of a specified parameter and one channel
+% NEMO_PLOT_HILBERTCHANNEL plots the output of nemo_hilberstats_sensorlevel as TFR of a specified parameter and one channel
 % 
 % Use as
 %       plot_hilbertchannel(cfg, data_tf)
@@ -9,6 +9,9 @@ function plot_hilbertchannel(cfg, data_tf)
 %   cfg.funparameter       = parameter you want to plot, can be 'stat', 'avg', 'itc', 'pval'
 %   cfg.channel            = string specifying the channel that should be plotted, as specified in data_tf.label
 %   cfg.freqbands          = n_freq x 2 matrix specifying the lower and upper limits of the frequency bands (see below!)
+%   cfg.zlim               = limits for color dimension, can be 'maxabs' (default), 'mincenter' (centered at zero, minimum value is limit), 'maxcenter' or [min max]
+%   cfg.xlim               = time limits for plotting
+%   cfg.maskparameter      = if masking is desired, this should point to a field in data_tf that contains a binary mask
 %
 % This function needs frequency bands instead of center/mean frequencies.
 % You can either have that specified directly in your data as
@@ -19,7 +22,7 @@ function plot_hilbertchannel(cfg, data_tf)
 
 
 
-
+             
 % check config structure:
 if(~isfield(cfg, 'funparameter'))
     error('Please specify a funparameter in your configuration structure!')
@@ -55,8 +58,40 @@ else
 end
 
 
+%% Mask data
+
+if(isfield(cfg, 'maskparameter'))
     
-%% Check the frequency bands 
+    mask = data_tf.(cfg.maskparameter);
+    
+    % check if maskparameter has right dimensions
+    dims = size(data_tf.(cfg.funparameter));
+    if(sum(dims~=size(mask))~=0)   % whatever
+        error('Maskparameter dimensions do not fit data dimensions.')
+    end
+    
+    
+    if(chandim==1)   % is there a more elegant way to do this? is it even necessary cause data come from hilbertstats script most likely anyway?!
+        mask = squeeze(mask(channum,:,:));
+    elseif(chandim ==2)
+        mask = squeeze(mask(:,channum,:));
+    else
+        mask = squeeze(mask(:,:,channum));
+    end
+    
+    % check if mask is truly binary
+    bincheck = unique(mask);
+    if(~islogical(bincheck))
+        error('Maskparameter is not binary');
+    end
+        
+    
+    dat(~mask) = NaN;
+    
+    
+end
+
+%% Check the frequency bands
 
 if(~isfield(data_tf, 'freqbands'))              % if no data_tf.freqbands
     if(isfield(cfg, 'freqbands'))               % but cfg.freqbands
@@ -111,18 +146,40 @@ end
 
 %% plot
 
-cmin = min(min(datplot));
-cmax = max(max(datplot));
-clims = max(abs([cmin, cmax]));    % automatically center zero on color bar
+if(~isfield(cfg, 'zlim'))
+    cfg.zlim = 'maxabs'; % use maxabs as default
+end
+
+if(isnumeric(cfg.zlim))   % if user specified own values
+    climlo = cfg.zlim(1);
+    climup = cfg.zlim(2);
+else  
+    switch cfg.zlim
+        case 'maxabs'
+            cmin = min(min(datplot));
+            cmax = max(max(datplot));
+            clims = max(abs([cmin, cmax]));    % automatically center zero on color bar
+        case 'mincenter'
+            clims = abs(min(min(datplot)));    % centered, max values are min and +min
+        case 'maxcenter'
+            clims = abs(max(max(datplot))); % centered, max values are -max and max
+    end
+    climlo = -clims;
+    climup = clims;
+end
 
 freqs = reshape(data_tf.freqbands',1,size(data_tf.freqbands,1)*2);
 
 h=surf(data_tf.time, freqs, datplot);
 shading interp
 view(gca, 2)
-set(h, 'linewidth', 2);
 title(cfg.channel, 'FontSize', 18);
 ylabel('Frequency (Hz)');
 xlabel('Time (s)');
-set(gca, 'clim', [-clims clims]);
+set(gca, 'clim', [climlo climup]);
+if(isfield(cfg, 'xlim'))
+    set(gca, 'xlim', [cfg.xlim(1), cfg.xlim(2)]);
+end
+axis tight
+grid off
 colorbar;
