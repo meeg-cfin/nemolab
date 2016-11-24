@@ -176,10 +176,10 @@ if(cfg.marking)
     
     for ii=1:size(dat,1)
         % this needs to be done for every frequency separately
-        maskcumsum = cumsum(mask(ii,:));
+        maskcumlsum = cumsum(mask(ii,:));
         cluststart = []; countstart = []; cluststop = []; countstop = [];
         
-        if(sum(maskcumsum)==0)   % no significant timepoints at all
+        if(sum(maskcumlsum)==0)   % no significant timepoints at all
             clusterson{ii} =   [];
             clustersoff{ii} =  [];
         else
@@ -189,9 +189,9 @@ if(cfg.marking)
             
             % STARTPOINTS OF CLUSTERS
             % first check the 1st sample:
-            if(maskcumsum(1)==1)   % if the cluster starts at the beginning of the whole thing
+            if(maskcumlsum(1)==1)   % if the cluster starts at the beginning of the whole thing
                 % check if cluster is only 1 point
-                if(maskcumsum(2)==1)
+                if(maskcumlsum(2)==1)
                     % do nothing
                 else
                     countstart = countstart + 1;
@@ -200,24 +200,24 @@ if(cfg.marking)
                 
             end
             
-            if(maskcumsum(2)==1 && maskcumsum(1)==0)
+            if(maskcumlsum(2)==1 && maskcumlsum(1)==0)
                     countstart = countstart + 1;  
                     cluststart(countstart) = 1;
             end
                 
             
-            for n=2:length(maskcumsum)-2 % we do not want to check the last point here
+            for n=2:length(maskcumlsum)-2 % we do not want to check the last point here
                 
-                if(maskcumsum(n) < maskcumsum(n+1) && maskcumsum(n) == maskcumsum(n-1))
+                if(maskcumlsum(n) < maskcumlsum(n+1) && maskcumlsum(n) == maskcumlsum(n-1))
                     countstart = countstart + 1;
                     cluststart(countstart) = n+1;
                 end
             end
             
             % ENDPOINTS OF CLUSTERS
-            for n=2:length(maskcumsum)-1
+            for n=2:length(maskcumlsum)-1
                 
-                if(maskcumsum(n) > maskcumsum(n-1) && maskcumsum(n) == maskcumsum(n+1))
+                if(maskcumlsum(n) > maskcumlsum(n-1) && maskcumlsum(n) == maskcumlsum(n+1))
                     countstop = countstop + 1;
                     cluststop(countstop) = n;
                 end
@@ -231,7 +231,7 @@ if(cfg.marking)
                     % do nothing
                 else
                 countstop = countstop + 1;
-                cluststop(countstop) = length(maskcumsum);
+                cluststop(countstop) = length(maskcumlsum);
                 end
             end
             
