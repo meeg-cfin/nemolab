@@ -1,5 +1,4 @@
-function grid = nemo_makeleadfield(cfgnemo)
-gridresolution = 10
+function [grid,vol] = nemo_makeleadfield(cfgnemo)
 
 %% headmodel
 
@@ -22,21 +21,37 @@ switch(cfgnemo.headmodelstrategy)
 
         
     case 'openmeeg'
-                cfg                       = [];
-        subjId = ['test_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
+        cfg                       = [];
+        subjId = [cfgnemo.participant '_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
         vol.bnd = cfgnemo.bnd;
         switch(cfgnemo.numlayers)
             case 4
                 vol.cond = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
-                vol.cond = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers
+                vol.cond = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
             case 3
                 vol.cond = [0.33 0.0041 0.33]; % SI units, ignore CSF
-                vol.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+%                vol.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
         end
         vol.type = cfgnemo.headmodelstrategy;
         vol.basefile = subjId;
         vol.path = ['./' subjId '/hm/openmeeg_out']; % following files in here can be reused: hm.bin, hm_inv.bin, dsm.bin
         vol = ft_convert_units(vol,'mm');    % Convert bnd to SI units
+   case 'simbio'
+        cfg                       = [];
+        cfg.method = 'simbio';
+        subjId = [cfgnemo.participant '_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
+        vol.bnd = cfgnemo.bnd;
+        switch(cfgnemo.numlayers)
+            case 4
+                cfg.conductivity = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
+                cfg.conductivity = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
+            case 3
+                cfg.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
+%                vol.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+        end
+        vol.type = cfgnemo.headmodelstrategy;
+        vol = ft_convert_units(vol,'mm');    % Convert bnd to SI units
+        vol = ft_prepare_headmodel(cfg,vol.bnd);
 
 end
 
@@ -57,66 +72,33 @@ end
 % prepare MNI voxel list
 cfg                       = [];
 cfg.grad                  = cfgnemo.grad_mri; % mm
+cfg.vol                   = ft_convert_units(vol,'mm');
+cfg.reducerank = 'no';
 
-switch(cfgnemo.headmodelstrategy)
-    case {'singleshell','dipoli','bemcp'}        
-        
-        % create the subject specific grid, using the template grid that has just been created
-        cfg.grid.warpmni   = 'yes';
-        load standard_sourcemodel3d10mm; % loads in sourcemodel (i.e., MNI voxel grid)
-        sourcemodel  = ft_convert_units(sourcemodel,'mm');
-        cfg.grid.template = sourcemodel;
-        cfg.grid.nonlinear = 'yes'; % use non-linear normalization
-        cfg.mri            = cfgnemo.mri;
-        clear mri
-        cfg.unit = 'mm',
-        
-        cfg.vol                   = ft_convert_units(vol,'mm');
-        cfg.megchans = cfgnemo.megchans;
-        cfg.reducerank = 'no';
-        cfg.grid.resolution = gridresolution;
-        grid               = ft_prepare_leadfield(cfg);
-        
-
-    case 'openmeeg'
-        switch(cfgnemo.voxelgridtype)
-            case 'subjectspace'
-                cfg.vol                   = ft_convert_units(vol,'mm');
-                cfg.grid.resolution       = 10; % use 10mm for quick look; 5 for final computation
-                cfg.grid.unit             = 'mm';
-                cfg.megchans = megchans;
-                cfg.reducerank = 'no';
-                grid=ft_prepare_leadfield(cfg);
-            case 'mni-ft'
-                % create the subject specific grid, using the template grid that has just been created
-                cfg.grid.warpmni   = 'yes';
-                %standard_sourcemodel3d5mm;  % in cm!!!!
-                load standard_sourcemodel3d10mm; % loads in sourcemodel (i.e., MNI voxel grid)
-                %            load template_grid; sourcemodel = template_grid;
-                sourcemodel  = ft_convert_units(sourcemodel,'mm');
-                cfg.grid.template = sourcemodel;
-                cfg.grid.nonlinear = 'yes'; % use non-linear normalization
-                cfg.mri            = cfgnemo.mri;
-                cfg.grid.unit = 'mm',
-                %    gridmni               = ft_prepare_sourcemodel(cfg);
-                
-                cfg.vol                   = ft_convert_units(vol,'mm');
-                cfg.megchans = cfgnemo.megchans;
-                cfg.reducerank = 'no';
-                cfg.grid.resolution = gridresolution;
-                cfg.grad                  = ft_convert_units(cfgnemo.grad_mri,'mm'); % SI units
-                cfg.megchans = cfgnemo.megchans;
-                cfg.reducerank = 'no';
-                grid               = ft_prepare_leadfield(cfg);
-                
-                
-                
-            case 'mni-nm'
-                % TEST NEEDED: does this work at all? is it compatible with NMT plotting?
-                load template_grid
-                grid = template_grid;
-                grid.pos = nut_mni2mri(template_grid.pos);
-        end
+if(1) % new way: load pre-normalized MRI and determine grid positions from it
+    params = load('sSSD_sn.mat');
+    cfg.grid.pos = ft_warp_apply(params, cfgnemo.sourcemodel.pos, 'sn2individual');
+else
+    % create the subject specific grid, using the template grid that has just been created
+    cfg.grid.warpmni   = 'yes';
+    cfg.grid.template = cfgnemo.sourcemodel;
+    cfg.grid.nonlinear = 'yes'; % use non-linear normalization
+    %cfg.grid.resolution = cfgnemo.gridresolution;
+    cfg.grid.unit = 'mm',
+    cfg.mri            = cfgnemo.mri;
 end
 
-cfg = [];
+if(cfgnemo.VOeyes) % add eyes to "inside" grid
+    cfg.grid = ft_prepare_sourcemodel(cfg); % this computes the grid.inside manually
+    
+    [x,y,z]=meshgrid(-50:50,45:75,-55:-25); % corresponds to eye region in MNI
+    eye_xyz = [x(:) y(:) z(:)];
+    
+    [~,eye_idx]=intersect(cfgnemo.sourcemodel.pos,eye_xyz,'rows');
+    cfg.grid.inside(eye_idx) = 1;
+end
+
+% cfg.channel = cfgnemo.megchans;
+
+grid               = ft_prepare_leadfield(cfg);
+
