@@ -35,15 +35,22 @@ elseif(isfield(dat,'trial'))   % calculate the virtual sensors for more than one
         
         
         spatfilt = reshape([source_in.avg.filter{inside_idx}],3, numel(source_in.avg.label),length(inside_idx) );
-        
-        for ii=1:length(dat.trial)
-            virtsens.x{ii} = squeeze(spatfilt(1,:,:))'*dat.trial{ii}(chansel,:);
-            virtsens.y{ii} = squeeze(spatfilt(2,:,:))'*dat.trial{ii}(chansel,:);
-            virtsens.z{ii} = squeeze(spatfilt(3,:,:))'*dat.trial{ii}(chansel,:);
+        spatfilt_x = squeeze(spatfilt(1,:,:))';
+        spatfilt_y = squeeze(spatfilt(2,:,:))';
+        spatfilt_z = squeeze(spatfilt(3,:,:))';
+      
+        for ii=1:size(dat.trial,2)
+            source_out.trial(ii).mom = cell(size(source_in.avg.mom)); % initialize mom cells
+            s_x = spatfilt_x*dat.trial{ii}(chansel,:);
+            s_y = spatfilt_y*dat.trial{ii}(chansel,:);
+            s_z = spatfilt_z*dat.trial{ii}(chansel,:);
+            if(0)
+                s = s_x.^2 + s_y.^2 + s_z.^2;
+                source_out.trial(ii).mom(inside_idx) = mat2cell(s,ones(size(s,1),1),size(s,2));
+            end
+            source_out.trial(ii).mom(inside_idx) = mat2cell([s_x;s_y;s_z],3*ones(size(s_x,1),1),size(s_x,2));
         end
-        
-        source_out.virtsens = virtsens;      % TO DO: could of course be shaped in a nicer way, e.g. in one cell
-        
+         
     else
         error('Cannot handle %d orientations yet, sorry.', num_oris)   % TO DO
     end
