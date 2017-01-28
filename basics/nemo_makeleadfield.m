@@ -22,20 +22,36 @@ switch(cfgnemo.headmodelstrategy)
         
     case 'openmeeg'
         cfg                       = [];
-        subjId = ['test_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
+        subjId = [cfgnemo.participant '_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
         vol.bnd = cfgnemo.bnd;
         switch(cfgnemo.numlayers)
             case 4
                 vol.cond = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
-                vol.cond = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers
+                vol.cond = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
             case 3
                 vol.cond = [0.33 0.0041 0.33]; % SI units, ignore CSF
-                vol.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+%                vol.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
         end
         vol.type = cfgnemo.headmodelstrategy;
         vol.basefile = subjId;
         vol.path = ['./' subjId '/hm/openmeeg_out']; % following files in here can be reused: hm.bin, hm_inv.bin, dsm.bin
         vol = ft_convert_units(vol,'mm');    % Convert bnd to SI units
+   case 'simbio'
+        cfg                       = [];
+        cfg.method = 'simbio';
+        subjId = [cfgnemo.participant '_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
+        vol.bnd = cfgnemo.bnd;
+        switch(cfgnemo.numlayers)
+            case 4
+                cfg.conductivity = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
+                cfg.conductivity = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
+            case 3
+                cfg.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
+%                vol.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+        end
+        vol.type = cfgnemo.headmodelstrategy;
+        vol = ft_convert_units(vol,'mm');    % Convert bnd to SI units
+        vol = ft_prepare_headmodel(cfg,vol.bnd);
 
 end
 
