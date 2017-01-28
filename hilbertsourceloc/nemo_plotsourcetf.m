@@ -3,10 +3,10 @@ nemo_ftsetup % set up path etc.
 
 basepath = pwd;
 
-mripath = [basepath '/sSSD.nii'];
-normmripath = [basepath '/wsSSD.nii'];
-mri = ft_read_mri(mripath,'dataformat','nifti');
-mri.coordsys = 'spm';
+mripath = [basepath '/s' cfgnemo.participant '.nii'];
+normmripath = [basepath '/ws' cfgnemo.participant '.nii'];
+% mri = ft_read_mri(mripath,'dataformat','nifti');
+% mri.coordsys = 'spm';
 
 cfg = [];
 cfg.atlas = ft_read_atlas('ROI_MNI_V4.nii'); % AAL atlas
@@ -25,14 +25,14 @@ switch(cfgnemo.sourceplottype)
         cfg.funparameter = 'avg.mom';
         cfg.evokedoverlay = 1;
         % cfg.plottype = 'ts';  % if you want to view as time series instead
-        nmt_sourceplot(cfg,ft_convert_units(source_tf,'mm'));
+        nmt_sourceplot(cfg,source_tf);
         
     case 'fancy'
         %% fancy plotting with thresholding (e.g. with p-value)
-        cfg.funparameter = 'stat';
+        cfg.funparameter = {'itc','stat'};
         cfg.maskparameter = 'msk';
         masktype = 'pval';  % masktypes: pval, momhigh, momlow, momabs, itchigh, itclow, pow
-        maskthresh = -6; % for pval masktype, this should be log(pval)
+        maskthresh = log10(.001); for pval masktype, this should be log(pval)
         
         if(isfield(source_tf,'dim'))
             % FIXME: source_tf_avg contains "dim", but others don't. this confuses
