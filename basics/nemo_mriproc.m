@@ -91,7 +91,7 @@ else
                 [bnd(ii).pos, bnd(ii).tri] = meshcheckrepair(bnd(ii).pos, bnd(ii).tri, 'meshfix');
             end
             % Ensure no overlaps
-            bnd = nemo_decouplesurf(bnd);    % decouplesurf is an unimplemented subfunction temporarily stashed in prepare_mesh_segmentation
+            bnd = nemo_decouplesurf(bnd);
             
             if(cfgnemo.plotvol)
                 figure;

@@ -76,7 +76,7 @@ cfg.vol                   = ft_convert_units(vol,'mm');
 cfg.reducerank = 'no';
 
 if(1) % new way: load pre-normalized MRI and determine grid positions from it
-    params = load('sSSD_sn.mat');
+    params = load(['s' cfgnemo.participant '_sn.mat']);
     cfg.grid.pos = ft_warp_apply(params, cfgnemo.sourcemodel.pos, 'sn2individual');
 else
     % create the subject specific grid, using the template grid that has just been created
