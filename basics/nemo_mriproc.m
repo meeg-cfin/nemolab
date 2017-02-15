@@ -8,7 +8,6 @@ plotvol = true;
 % nm
 %%% then:
 % global nuts; coreg = nuts.coreg; save sSSDcoreg coreg
-%% OR FT
 load(['s' cfgnemo.participant 'coreg.mat']);
 
 switch(data.grad.type)
@@ -22,28 +21,20 @@ end
 [coreg.mri2meg_tfm,coordsys] = ft_headcoordinates(coreg.fiducials_mri_mm(3,:),coreg.fiducials_mri_mm(1,:),coreg.fiducials_mri_mm(2,:),origcoordsys);
 coreg.meg2mri_tfm = inv(coreg.mri2meg_tfm);
 
+%% transform MEG to MRI space
 grad = data.grad;  % NOTE data.hdr.grad does not contain correct information if synthetic gradient has been manipulated above
 grad_mm = ft_convert_units(grad,'mm'); % transforms the grad units (m) to the same than mri (mm)
-
-grad_mri = ft_transform_sens(coreg.meg2mri_tfm, grad_mm); % transforms the grad_mm coordinates to mri mm coordinates
+grad_mri = ft_transform_sens(coreg.meg2mri_tfm, grad_mm); % transforms the grad coordinates to mri coordinates
 grad_mri.coordsys = 'spm';
 
 
-
-
-% load mri
+%% load mri
 basepath = pwd;
 mripath = [basepath '/s' cfgnemo.participant '.nii'];
 normmripath = [basepath '/ws' cfgnemo.participant '.nii'];
 mri = ft_read_mri(mripath,'dataformat','nifti');
 mri.coordsys = 'spm';
 
-
-%% transform MEG to MRI space
-grad = data.grad;  % NOTE data.hdr.grad does not contain correct information if synthetic gradient has been manipulated above
-grad_mm = ft_convert_units(grad,'mm'); % transforms the grad units (m) to the same than mri (mm)
-grad_mri = ft_transform_sens(coreg.meg2mri_tfm, grad_mm); % transforms the grad coordinates to mri coordinates
-grad_mri.coordsys = 'spm';
 
 %% segmentation (runs only if seg_*.mat is not already present)
 if(exist([basepath '/seg_' cfgnemo.segmethod '.mat'],'file'))
@@ -100,7 +91,7 @@ else
                 [bnd(ii).pos, bnd(ii).tri] = meshcheckrepair(bnd(ii).pos, bnd(ii).tri, 'meshfix');
             end
             % Ensure no overlaps
-            bnd = decouplesurf(bnd);    % decouplesurf is an unimplemented subfunction temporarily stashed in prepare_mesh_segmentation
+            bnd = nemo_decouplesurf(bnd);    % decouplesurf is an unimplemented subfunction temporarily stashed in prepare_mesh_segmentation
             
             if(cfgnemo.plotvol)
                 figure;
