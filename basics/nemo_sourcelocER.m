@@ -3,7 +3,6 @@
 % freqbands: frequency bands of interest
 % cfgnemo.segmethod: 'ftvolseg' or 'spm8newseg' or ???
 % voxelgridtype: 'mni-ft' is the only smart option :-)
-% tfstats: hilbert stats on/off (can require lots of RAM!!)
 % cfgnemo.headmodelstrategy: 'singleshell', 'openmeeg', 'dipoli', etc.
 % cfgnemo.numlayers: number of layers for MRI segmentation (3 or 4 is typical)
 %
@@ -14,19 +13,9 @@
 %   Final results should use sequential lowpass/highpass FIR filters!!
 %
 % TODO
-% - investigate whether cfg.precision = 'single' can save memory without causing problems!
-% - *** CHECK ITC COMPUTATION
-% - *** HOW TO HANDLE ERF COMPUTATION?? (does running it through hilbert make sense??)
 % - allow choice of reconstruction methods with simple switch (i.e., lcmv vs sloreta/dspm)
-% - allow lead field choice
-% - implement SimBio method, requires tetrahedral mesh option
-% - downsampling to save on memory/computation
-% - check that large matrices are cleared when they are no longer needed
 % - implement FilterM method
-% - compare with dipoli
 % - add transparent compatibility with EEG (i.e., pass 'elec' vs 'grad' where appropriate)
-% - allow manual SPM normalization, and save result
-% - add "block design" mode and nutmegtrip support for it
 % - for testing: create test source structures to ensure that nutmegtrip doesn't break for a particular type of data
 %                including: lead field plotting, topography plotting, etc.
 
@@ -49,6 +38,18 @@ cfgnemo.VOeyes = 0;
 cfgnemo.segmethod = 'ftvolseg';
 cfgnemo.numlayers = 3; % 3 for 3-layer, 4 for 4-layer
 cfgnemo.plotvol = 0; % plot surfaces with sensor positions as a check
+cfgnemo.gridmethod = 'MNI';
+
+load('standard_sourcemodel3d10mm'); % loads in sourcemodel (i.e., MNI voxel grid)
+cfgnemo.sourcemodel = ft_convert_units(sourcemodel,'mm');
+
+
+%%
+cfgnemo.megchans = {'MEG'};
+megergchans = {cfgnemo.megchans{:}};
+%megergchans = {'EMG002', cfgnemo.megchans{:}};
+
+%%
 saveRAM = false; % try to delete mega-matrices after they're no longer needed
 
 load('standard_sourcemodel3d10mm'); % loads in sourcemodel (i.e., MNI voxel grid)
@@ -57,7 +58,6 @@ sourcemodel = ft_convert_units(sourcemodel,'mm');
 
 %% load and resample data
 load flash_1ms_botheyes.mat
-
 
 % here we filter data that is already segmented; however, it is probably
 % desirable to filter the entire dataset first and then segment, to minimize edge artifacts
@@ -72,13 +72,11 @@ cfgnemo.grad_mri.coordsys = 'spm';
 
 %%
 cfgnemo.bnd = bnd;
-%[leadgrid,vol] = nemo_makeleadfield(cfgnemo);
-load leadgrid
-
-%%
-cfgnemo.megchans = {'MEG'};
-megergchans = {cfgnemo.megchans{:}};
-%megergchans = {'EMG002', cfgnemo.megchans{:}};
+if(exist('leadgrid','file'))
+    load leadgrid
+else
+    [leadgrid,vol] = nemo_makeleadfield(cfgnemo);
+end
 
 
 %%
@@ -88,6 +86,7 @@ megergchans = {cfgnemo.megchans{:}};
     cfg.baselinewindow = baselinewindow;
         cfg.hpfilter = 'yes'; % NB: default butterworth for quick testing; specify more advanced filter for real analysis!
         cfg.hpfreq = [75];
+        cfg.hpfreq = [1];
         cfg.dftfilter = 'yes';
         cfg.dftfrq = [50:50:200];
     databp = ft_preprocessing(cfg,data);
@@ -97,21 +96,21 @@ megergchans = {cfgnemo.megchans{:}};
     cfg.toilim = toilim;
     databp = ft_redefinetrial(cfg,databp);
     
-    trials = cell2mat(databp.trial);
-
+    
     if(strcmp(cfgnemo.megchans,'MEG')) % correct for magnetometer vs gradiometer scaling
+        trials = cell2mat(databp.trial);
         smag = svd(cov(trials(1:3:end,:)'));
         sgrad = svd(cov(trials([2:3:end 3:3:end],:)'));
         
         scaling = sqrt(sgrad(end)/smag(end));
-    for ii=1:length(databp.trial)
-        databp.trial{ii}(1:3:end,:)=scaling*databp.trial{ii}(1:3:end,:);
-    end
-    
-    inside_idx=find(leadgrid.inside);
-    for ii=1:length(inside_idx)
-        leadgrid.leadfield{inside_idx(ii)}(1:3:end,:)=scaling*leadgrid.leadfield{inside_idx(ii)}(1:3:end,:);
-    end
+        for ii=1:length(databp.trial)
+            databp.trial{ii}(1:3:end,:)=scaling*databp.trial{ii}(1:3:end,:);
+        end
+        
+        inside_idx=find(leadgrid.inside);
+        for ii=1:length(inside_idx)
+            leadgrid.leadfield{inside_idx(ii)}(1:3:end,:)=scaling*leadgrid.leadfield{inside_idx(ii)}(1:3:end,:);
+        end
     end
     
     cfgtl                  = [];
@@ -164,7 +163,7 @@ for ii=1:length(lambda)
          cfg.(cfg.method).fixedori = 'yes';
      end
      cfg.(cfg.method).projectnoise = 'yes';
-     cfg.(cfg.method).weightnorm   = 'nai'; %% NOTE: nai or lfnorm seems crucial for good performance!
+     cfg.(cfg.method).weightnorm   = 'nai';
     cfg.(cfg.method).keepfilter   = 'yes';
     cfg.keeptrials = 'yes';
     source_bp{ii}         = ft_sourceanalysis(cfg, timelockbp); % high-frequencies only
