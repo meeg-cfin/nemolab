@@ -75,17 +75,21 @@ cfg.grad                  = cfgnemo.grad_mri; % mm
 cfg.vol                   = ft_convert_units(vol,'mm');
 cfg.reducerank = 'no';
 
-if(1) % new way: load pre-normalized MRI and determine grid positions from it
-    params = load(['s' cfgnemo.participant '_sn.mat']);
-    cfg.grid.pos = ft_warp_apply(params, cfgnemo.sourcemodel.pos, 'sn2individual');
-else
-    % create the subject specific grid, using the template grid that has just been created
-    cfg.grid.warpmni   = 'yes';
-    cfg.grid.template = cfgnemo.sourcemodel;
-    cfg.grid.nonlinear = 'yes'; % use non-linear normalization
-    %cfg.grid.resolution = cfgnemo.gridresolution;
-    cfg.grid.unit = 'mm',
-    cfg.mri            = cfgnemo.mri;
+switch(cfgnemo.gridmethod)
+    case 'MNI'
+        % load pre-normalized MRI and determine grid positions from it
+        params = load(['s' cfgnemo.participant '_sn.mat']);
+        cfg.grid.pos = ft_warp_apply(params, cfgnemo.sourcemodel.pos, 'sn2individual');
+    case 'MNIold'
+        % create the subject specific grid, using the template grid that has just been created
+        cfg.grid.warpmni   = 'yes';
+        cfg.grid.template = cfgnemo.sourcemodel;
+        cfg.grid.nonlinear = 'yes'; % use non-linear normalization
+        %cfg.grid.resolution = cfgnemo.gridresolution;
+        cfg.grid.unit = 'mm',
+        cfg.mri            = cfgnemo.mri;
+    otherwise
+        error('this grid method does not exist!')
 end
 
 if(cfgnemo.VOeyes) % add eyes to "inside" grid
@@ -98,7 +102,6 @@ if(cfgnemo.VOeyes) % add eyes to "inside" grid
     cfg.grid.inside(eye_idx) = 1;
 end
 
-% cfg.channel = cfgnemo.megchans;
-
+% cfg.channel = cfgnemo.megchans;  % this is necessary if using cfg.normalize = 'yes' or 'column'!!!!
 grid               = ft_prepare_leadfield(cfg);
 
