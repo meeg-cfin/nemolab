@@ -1,20 +1,47 @@
 
 plotvol = true;
 
-%% reslice mri (if not already done)
-% reslice_nii('SSD.nii','sSSD.nii',1); % reslice into isotropic 1 mm voxels
-%
-%% COREGISTER in NUTMEG
-% nm
-%%% then:
-% global nuts; coreg = nuts.coreg; save sSSDcoreg coreg
+%% reslice mri (if not already done) so that voxels are isotropic
+if(~exist(['s' cfgnemo.participant '.nii'],'file'))
+    reslice_nii([cfgnemo.participant '.nii'],['s' cfgnemo.participant '.nii'],1); % reslice into isotropic 1 mm voxels
+end
+
+%% load mri
+basepath = pwd;
+mripath = [basepath '/s' cfgnemo.participant '.nii'];
+normmripath = [basepath '/ws' cfgnemo.participant '.nii'];
+mri = ft_read_mri(mripath,'dataformat','nifti');
+mri.coordsys = 'spm';
+
+%% coregistration (copy and paste below your preferred block below, and do this manually)
+switch(0)
+    case 'nutmeg'
+        %% COREGISTER in NUTMEG (do this manually)
+        nm
+        % [ use nutmeg's coregistration GUI, then close the dialog box ]
+        global nuts; coreg = nuts.coreg; save(['s' cfgnemo.participant 'coreg.mat','coreg']);
+    case 'fieldtrip'
+        %% ALTERNATIVELY COREGISTER IN FIELDTRIP
+        cfgcoreg = [];
+        cfgcoreg.method = 'interactive';
+        mritmp = ft_volumerealign(cfgcoreg,mri);
+        fids = [mritmp.cfg.fiducial.lpa; mritmp.cfg.fiducial.rpa; mritmp.cfg.fiducial.nas]; 
+        coreg.fiducials_mri_mm = nmt_transform_coord(mritmp.transformorig,fids);
+        %clear mritmp
+end
+
+%% compute head coordinates based on particular MEG system's convention
 load(['s' cfgnemo.participant 'coreg.mat']);
 
 switch(data.grad.type)
     case {'bti148','bti248'}
         origcoordsys = 'bti';
+    case {'ctf151','ctf275'}
+        origcoordsys = 'ctf';
     case 'neuromag306'
         origcoordsys = 'neuromag';
+    case 'yokogawa160'
+        origcoordsys = 'yokogawa';
     otherwise
         error('Which fiducial convention do you have? Add it to the cases above!')
 end
@@ -26,15 +53,6 @@ grad = data.grad;  % NOTE data.hdr.grad does not contain correct information if 
 grad_mm = ft_convert_units(grad,'mm'); % transforms the grad units (m) to the same than mri (mm)
 grad_mri = ft_transform_sens(coreg.meg2mri_tfm, grad_mm); % transforms the grad coordinates to mri coordinates
 grad_mri.coordsys = 'spm';
-
-
-%% load mri
-basepath = pwd;
-mripath = [basepath '/s' cfgnemo.participant '.nii'];
-normmripath = [basepath '/ws' cfgnemo.participant '.nii'];
-mri = ft_read_mri(mripath,'dataformat','nifti');
-mri.coordsys = 'spm';
-
 
 %% segmentation (runs only if seg_*.mat is not already present)
 if(exist([basepath '/seg_' cfgnemo.segmethod '.mat'],'file'))
@@ -117,6 +135,7 @@ end
 cfgnemo.mri = mri;
 
 %% Spatial normalization via SPM
+% performance of normalization can be visualized and double-checked in this block
 %
 % if using SPM12, SPM12/toolbox/OldNorm needed in path
 % TODO: try out SPM12's DARTEL normalization
@@ -139,9 +158,6 @@ if(~exist(normmripath,'file'))
     
     spm_figure('Create','Graphics');
     spm_figure('Redraw');
-%     tmpcfg.write = 'yes';
-%     tmpcfg.name = normmripath;
-%     normalise = ft_volumenormalise(tmpcfg, mri);
     
     templateweight = [];  % optional mask
     mriweight = []; % <---- optional mask, useful for abnormal MRIs
@@ -155,4 +171,4 @@ if(~exist(normmripath,'file'))
     
     spm_write_sn(mripath, params, rflags);
 end
-    
+
