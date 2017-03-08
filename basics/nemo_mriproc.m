@@ -27,7 +27,9 @@ switch(0)
         mritmp = ft_volumerealign(cfgcoreg,mri);
         fids = [mritmp.cfg.fiducial.lpa; mritmp.cfg.fiducial.rpa; mritmp.cfg.fiducial.nas]; 
         coreg.fiducials_mri_mm = nmt_transform_coord(mritmp.transformorig,fids);
-        %clear mritmp
+        
+        save(['s' cfgnemo.participant 'coreg.mat','coreg']);
+        clear mritmp
 end
 
 %% compute head coordinates based on particular MEG system's convention
