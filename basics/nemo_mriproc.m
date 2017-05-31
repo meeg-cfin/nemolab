@@ -28,7 +28,7 @@ switch(0)
         fids = [mritmp.cfg.fiducial.lpa; mritmp.cfg.fiducial.rpa; mritmp.cfg.fiducial.nas]; 
         coreg.fiducials_mri_mm = nmt_transform_coord(mritmp.transformorig,fids);
         
-        save(['s' cfgnemo.participant 'coreg.mat','coreg']);
+        save(['s' cfgnemo.participant 'coreg.mat'],'coreg');
         clear mritmp
 end
 
