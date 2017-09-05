@@ -161,14 +161,14 @@ if(plotting)
 
     a=subplot(2,1,1)
     cfg.channel = 'EOG001';
-    plot_hilbertchannel(cfg, data_tf);
+    nemo_plot_hilbertchannel(cfg, data_tf);
     set(a, 'fontsize', 18)
     title('ERG right')
     axis tight
     
     b=subplot(2,1,2)
     cfg.channel = 'EOG002';
-    plot_hilbertchannel(cfg, data_tf);
+    nemo_plot_hilbertchannel(cfg, data_tf);
     set(b, 'fontsize', 18)
     title('ERG left')
     axis tight
