@@ -72,7 +72,7 @@ if(iscell(cfg.channel))    % if channel is specified as a cell: need to check th
     end
 end
 
-channum = strmatch(cfg.channel,data_tf.label);
+channum = find(strcmpi(cfg.channel,data_tf.label));#only find exact match
 
 dat = data_tf.(cfg.funparameter);
 
