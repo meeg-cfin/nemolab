@@ -23,13 +23,15 @@ def get_fiducial_info(raw_info, save_name):
     """
     import scipy.io as spo
 
-    dig_info = raw_info['hpi_results'][0]['dig_points']
+    dig_info = raw_info['dig']
+
 
     ident = []
-    coords = np.zeros((len(dig_info), 3))
+    coords = np.zeros((len(dig_info['kind'==1]), 3))
     for ii, points in enumerate(dig_info):
-        ident.append(points['ident'])
-        coords[ii, :] = points['r']
+        if points['kind'] == 1:
+            ident.append(points['ident'])
+            coords[ii, :] = points['r']
 
     mapping = {1 : 'lpa', 2 : 'nas', 3 : 'rpa', 4: 'unknown'}
     fid_id = np.zeros((len(ident), ), dtype=np.object)
