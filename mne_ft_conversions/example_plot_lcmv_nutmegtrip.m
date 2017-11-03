@@ -17,7 +17,7 @@
 
 % DATA
 % Path to MNE-Python output folder
-base_path = '/Data2/britta/playing_with_mnedata'% '/path/to/data';  % in this case, MNE sample data were used
+base_path = '/path/to/data';  % in this case, MNE sample data were used
 
 % source estimate filename from MNE-Python, saved with source_est.save()
 % NOTE: this script assumes the source reconstruction of evoked data, i.e. one time
