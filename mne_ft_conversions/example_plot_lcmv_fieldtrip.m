@@ -111,4 +111,3 @@ cfg = [];
 cfg.funparameter = 'avg.pow';
 cfg.method = 'slice';
 ft_sourceplot(cfg, source_interp);
-

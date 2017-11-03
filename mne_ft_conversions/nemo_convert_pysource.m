@@ -72,6 +72,3 @@ for ii=1:length(inside_idx)
 end
 
 end
-
-
-

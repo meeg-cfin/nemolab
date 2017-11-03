@@ -69,4 +69,3 @@ vol_nii.bnd.pos = pos_tmp;
 figure;
 ft_plot_ortho(mri_nii.anatomy, 'style', 'intersect'); hold on
 ft_plot_mesh(vol_nii.bnd, 'facecolor', 'magenta'); 
-
