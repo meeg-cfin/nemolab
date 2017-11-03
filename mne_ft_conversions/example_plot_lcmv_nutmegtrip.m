@@ -7,7 +7,15 @@
 %
 % Author: Britta Westner
 
+%% specifications and path names
 
+% TOOLBOX
+% path to Nutmegtrip - Fieldtrip itself not needed here
+fieldtrippathnmt = '/path/to/fieldtrip';
+addpath(fullfile(fieldtrippathnmt, 'contrib/nutmegtrip'));
+
+
+% DATA
 % Path to MNE-Python output folder
 base_path = '/path/to/data';  % in this case, MNE sample data were used
 
@@ -100,10 +108,6 @@ source_nii = source_ft;
 source_nii.pos = round(source_pos, 3); % rounding prevents mode() failure
 
 %% plot power with NutMEGtrip
-
-% path to Nutmeg
-fieldtrippathnmt = '/Data/MATLAB/dev/fieldtrip';
-addpath(fullfile(fieldtrippathnmt, 'contrib/nutmegtrip'));
 
 % plot the power estimate
 cfg=[];
