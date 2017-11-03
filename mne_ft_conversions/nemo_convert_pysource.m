@@ -4,6 +4,7 @@ function source_ft = nemo_convert_pysource(source_mne, fwd_mne)
 % read into MATLAB with mne_read_stc_file to a Fieldtrip source structure.
 %
 % Input:
+% ------
 % source_mne : The source structure from MNE-Python as read with 
 %              mne_read_stc_file
 % fwd_mne : Forward model from MNE-Python as read with 
@@ -11,10 +12,13 @@ function source_ft = nemo_convert_pysource(source_mne, fwd_mne)
 %           positions and transformation matrices.
 %
 % Output:
+% -------
 % source_ft : Fieldtrip-like source structure with all relevant information
 %             for further usage with plotting functions like ft_sourceplot
 %             or nmt_sourceplot.
+%
 % Author: Britta Westner
+%
 
 
 % initialize

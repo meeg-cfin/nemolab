@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % This script loads the output of the MNE-Python lcmv() and plots it with
-% Nutmegtrip
+% Nutmegtrip (in nifti space)
 %
 % Author: Britta Westner
 
