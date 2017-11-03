@@ -1,6 +1,6 @@
 function pos_nii = nemo_convert_pyras(pos, mri_mgz, mri_nii)
 
-% NEMO_CONVERT_PYVOL converts coordinates in MNE-Python MRI RAS space 
+% NEMO_CONVERT_PYRAS converts coordinates in MNE-Python MRI RAS space 
 % (Freesurfer RAS coordinates) to nifti MRI voxel space based on the 
 % transforms saved in the MRIs.
 %
