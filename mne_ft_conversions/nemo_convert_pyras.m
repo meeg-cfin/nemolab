@@ -1,8 +1,19 @@
 function pos_nii = nemo_convert_pyras(pos, mri_mgz, mri_nii)
 
-% NEMO_CONVERT_PYVOL converts coordinates in MNE-Python MRI RAS space 
+% NEMO_CONVERT_PYRAS converts coordinates in MNE-Python MRI RAS space 
 % (Freesurfer RAS coordinates) to nifti MRI voxel space based on the 
 % transforms saved in the MRIs.
+%
+% Input:
+% ------
+% pos : Original positions in RAS surface coordinates
+% mri_mgz : mat-file of the original T1.mgz
+% mri_nii : mat-file of the T1.mgz converted to nifti (converted with 
+%           Freesurfer, see below)
+%
+% Output:
+% -------
+% pos_nii : Positions converted to the coordinate frame of the T1.nii
 %
 % NOTE: converting the mgz MRI to nifti with Fieldtrip/SPM does not work. 
 % Use Freesurfer's mri_convert function for this
@@ -12,6 +23,7 @@ function pos_nii = nemo_convert_pyras(pos, mri_mgz, mri_nii)
 % Dependencies: NutMEG
 %
 % Author: Britta Westner
+%
 
 if(~exist('nut_coordtfm'))
     error('Please add NutMEG to your path. Cannot find nut_coordtfm.')

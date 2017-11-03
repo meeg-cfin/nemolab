@@ -50,7 +50,7 @@ vol_ft         = [];
 vol_ft.bnd.pos = vol_mne.rr * 1000; % convert to mm
 vol_ft.bnd.tri = vol_mne.tris;
 vol_ft.type    = 'openmeeg';
-vol_ft.cond    = [0.33, 0.0041, 0.33]; % change to whatever was 
+vol_ft.cond    = [0.33, 0.0041, 0.33]; % change to whatever was used in MNE
 
 %% Read the MRIs
 
@@ -69,4 +69,3 @@ vol_nii.bnd.pos = pos_tmp;
 figure;
 ft_plot_ortho(mri_nii.anatomy, 'style', 'intersect'); hold on
 ft_plot_mesh(vol_nii.bnd, 'facecolor', 'magenta'); 
-
