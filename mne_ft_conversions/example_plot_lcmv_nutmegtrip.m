@@ -38,7 +38,7 @@ fwd_model = mne_read_forward_solution(fullfile(base_path, fwd_fname), false,  fa
 
 %% make the source estimate a Fieldtrip structure
 
-source_ft = convert_source_mne_ft(source_mne, fwd_model);
+source_ft = nemo_convert_pysource(source_mne, fwd_model);
 
 %% Read the MRIs
 
