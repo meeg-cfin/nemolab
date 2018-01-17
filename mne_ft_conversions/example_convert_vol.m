@@ -12,8 +12,6 @@
 % TOOLBOXES
 % Fieldtrip
 fieldtrip_path = '/path/to/fieldtrip';
-% NutMEG
-nutmeg_path = '/path/to/nutmeg';
 
 % DATA
 % Path to MNE-Python subject folder
@@ -38,8 +36,9 @@ end
 [ft_ver, ft_path] = ft_version;
 display(sprintf('You are using Fieldtrip on path %s', ft_path));
 
-% handling NutMEG:
-addpath(nutmeg_path)
+% path to Nutmegtrip and MNE externals - Fieldtrip itself not needed here
+addpath(fullfile(fieldtrip_path, 'contrib/nutmegtrip'));
+addpath(fullfile(fieldtrip_path, 'external/mne'));
 
 %% Loading the BEM and constructing a Fieldtrip-like structure from it
 

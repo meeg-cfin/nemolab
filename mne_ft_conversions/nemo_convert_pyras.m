@@ -20,20 +20,20 @@ function pos_nii = nemo_convert_pyras(pos, mri_mgz, mri_nii)
 % 
 % NOTE: Make sure the objects are all in the same units.
 %
-% Dependencies: NutMEG
+% Dependencies: NutMEGtrip in Fieldtrip
 %
 % Author: Britta Westner
 %
 
-if(~exist('nut_coordtfm'))
-    error('Please add NutMEG to your path. Cannot find nut_coordtfm.')
+if(~exist('nmt_transform_coord'))
+    error('Please add the folder ./contrib/nutmegtrip of Fieldtrip to your path. Cannot find nmt_transform_coord.')
 end
 
 % go from Freesurfer RAS space to Freesurfer voxel space:
-pos_tmp = nut_coordtfm(pos, inv(mri_mgz.hdr.tkrvox2ras));
+pos_tmp = nmt_transform_coord(inv(mri_mgz.hdr.tkrvox2ras), pos);
 
 % go from Freesurfer voxel space to nifti voxel space:
-pos_tmp = nut_coordtfm(pos_tmp, mri_mgz.transform);
-pos_nii = nut_coordtfm(pos_tmp, inv(mri_nii.transform));
+pos_tmp = nmt_transform_coord(mri_mgz.transform, pos_tmp);
+pos_nii = nmt_transform_coord(inv(mri_nii.transform), pos_tmp);
 
 end

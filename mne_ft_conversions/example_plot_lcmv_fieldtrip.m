@@ -12,8 +12,6 @@
 % TOOLBOXES
 % Fieldtrip
 fieldtrip_path = '/path/to/fieldtrip';
-% NutMEG
-nutmeg_path = '/path/to/nutmeg';
 
 % DATA
 % Path to MNE-Python output folder
@@ -26,7 +24,7 @@ source_fname = 'source_est-vl.stc';
 
 % Files needed for transformations:
 mri_mgz_fname = 'T1.mgz';  % .mgz MRI used in Freesurfer
-mri_nii_fname = 'T1.nii';  % .nii version of the above MRI, transformed with Freesurfer
+mri_nii_fname = 'T1.nii';  % .nii version of the above MRI, transformed with Freesurfer (mri_convert)
 fwd_fname = 'sample_2-fwd.fif';  % forward model for transform matrices and source grid
 fid_fname = 'test2.mat';  % filename with fiducial information. saved from Python with get_fiducial_info.py
 
@@ -49,8 +47,9 @@ end
 [ft_ver, ft_path] = ft_version;
 display(sprintf('You are using Fieldtrip on path %s', ft_path));
 
-% handling NutMEG:
-addpath(nutmeg_path)
+% path to Nutmegtrip and MNE externals - Fieldtrip itself not needed here
+addpath(fullfile(fieldtrip_path, 'contrib/nutmegtrip'));
+addpath(fullfile(fieldtrip_path, 'external/mne'));
 
 %% read the source space estimate and the forward model
 

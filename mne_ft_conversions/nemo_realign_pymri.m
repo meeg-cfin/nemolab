@@ -21,7 +21,7 @@ function mri_aligned = nemo_realign_pymri(mri_nii, fid_info, sens_type, ras2meg_
 % -------
 % mri_aligned : mat-file containing the MRI aligned to MEG head space
 %
-% Dependencies: Fieldtrip
+% Dependencies: Fieldtrip, including NutMEGtrip
 %
 % Author: Britta Westner
 %
@@ -31,8 +31,13 @@ if(~exist('ft_volumerealign'))
     error('Please add FieldTrip to your path. Cannot find ft_volumerealign.')
 end
 
+
+if(~exist('nmt_transform_coord'))
+    error('Please add the folder ./contrib/nutmegtrip of Fieldtrip to your path. Cannot find nmt_transform_coord.')
+end
+
 % convert fiducials from MEG head space to nifti space:
-fid_info.fid_coord = nut_coordtfm(fid_info.fid_coord, inv(ras2meg_tfm));
+fid_info.fid_coord = nmt_transform_coord(inv(ras2meg_tfm), fid_info.fid_coord);
 fid_info.fid_coord = fid_info.fid_coord * 1000;
 fid_info.fid_coord = nemo_convert_pyras(fid_info.fid_coord, mri_mgz, mri_nii);
 

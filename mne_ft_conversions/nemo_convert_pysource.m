@@ -17,9 +17,17 @@ function source_ft = nemo_convert_pysource(source_mne, fwd_mne)
 %             for further usage with plotting functions like ft_sourceplot
 %             or nmt_sourceplot.
 %
+% NOTE: converting the mgz MRI to nifti with Fieldtrip/SPM does not work. 
+% Use Freesurfer's mri_convert function for this
+%
+% Dependencies: NutMEGtrip in Fieldtrip
+%
 % Author: Britta Westner
 %
 
+if(~exist('nmt_transform_coord'))
+    error('Please add the folder ./contrib/nutmegtrip of Fieldtrip to your path. Cannot find nmt_transform_coord.')
+end
 
 % initialize
 source_ft = [];
@@ -39,7 +47,7 @@ source_ft.inside = logical(source_ft.inside);
 
 % dimensions
 % convert to MRI space first b/c axes are aligned here
-source_pos_mri = nut_coordtfm(source_ft.pos, inv(fwd_mne.mri_head_t.trans));
+source_pos_mri = nmt_transform_coord(inv(fwd_mne.mri_head_t.trans), source_ft.pos);
 gridres = mode(diff(source_pos_mri(:,1)));
 
 dim(1) = round((max(source_pos_mri(:,1))-min(source_pos_mri(:,1))) / gridres);
