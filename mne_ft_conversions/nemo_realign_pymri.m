@@ -21,7 +21,7 @@ function mri_aligned = nemo_realign_pymri(mri_nii, fid_info, sens_type, ras2meg_
 % -------
 % mri_aligned : mat-file containing the MRI aligned to MEG head space
 %
-% Dependencies: Fieldtrip
+% Dependencies: Fieldtrip, including NutMEGtrip
 %
 % Author: Britta Westner
 %

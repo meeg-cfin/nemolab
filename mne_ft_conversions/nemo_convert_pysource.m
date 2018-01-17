@@ -17,6 +17,11 @@ function source_ft = nemo_convert_pysource(source_mne, fwd_mne)
 %             for further usage with plotting functions like ft_sourceplot
 %             or nmt_sourceplot.
 %
+% NOTE: converting the mgz MRI to nifti with Fieldtrip/SPM does not work. 
+% Use Freesurfer's mri_convert function for this
+%
+% Dependencies: NutMEGtrip in Fieldtrip
+%
 % Author: Britta Westner
 %
 

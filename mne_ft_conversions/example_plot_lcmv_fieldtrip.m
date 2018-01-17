@@ -24,7 +24,7 @@ source_fname = 'source_est-vl.stc';
 
 % Files needed for transformations:
 mri_mgz_fname = 'T1.mgz';  % .mgz MRI used in Freesurfer
-mri_nii_fname = 'T1.nii';  % .nii version of the above MRI, transformed with Freesurfer
+mri_nii_fname = 'T1.nii';  % .nii version of the above MRI, transformed with Freesurfer (mri_convert)
 fwd_fname = 'sample_2-fwd.fif';  % forward model for transform matrices and source grid
 fid_fname = 'test2.mat';  % filename with fiducial information. saved from Python with get_fiducial_info.py
 

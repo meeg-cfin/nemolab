@@ -20,7 +20,7 @@ function pos_nii = nemo_convert_pyras(pos, mri_mgz, mri_nii)
 % 
 % NOTE: Make sure the objects are all in the same units.
 %
-% Dependencies: NutMEG
+% Dependencies: NutMEGtrip in Fieldtrip
 %
 % Author: Britta Westner
 %
