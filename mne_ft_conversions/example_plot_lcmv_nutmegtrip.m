@@ -10,10 +10,10 @@
 %% specifications and path names
 
 % TOOLBOX
-% path to Nutmegtrip and MNE externals - Fieldtrip itself not needed here
-fieldtrippathnmt = '/path/to/fieldtrip';
-addpath(fullfile(fieldtrippathnmt, 'contrib/nutmegtrip'));
-addpath(fullfile(fieldtrippathnmt, 'external/mne'));
+% path to Fieldtrip
+fieldtrip_path = '/path/to/fieldtrip';
+% spm - needed by NutMEGtrip for plotting
+spm_path = 'path/to/spm';
 
 % DATA
 % Path to MNE-Python output folder
@@ -28,6 +28,27 @@ source_fname = 'source_est-vl.stc';
 mri_mgz_fname = 'T1.mgz';  % .mgz MRI used in Freesurfer
 mri_nii_fname = 'T1.nii';  % .nii version of the above MRI, transformed with Freesurfer (mri_convert)
 fwd_fname = 'sample_2-fwd.fif';  % forward model for transform matrices and source grid
+
+%% adding toolboxes to path
+% handling Fieldtrip paths and preventing multiple paths from being added:
+
+try
+    ft_defaults
+catch
+    warning('Fieldtrip is not on your path yet, adding it.');
+    addpath(fieldtrip_path)
+    ft_defaults
+end
+
+[ft_ver, ft_path] = ft_version;
+display(sprintf('You are using Fieldtrip on path %s', ft_path));
+
+% path to Nutmegtrip and MNE externals
+addpath(fullfile(fieldtrip_path, 'contrib/nutmegtrip'));
+addpath(fullfile(fieldtrip_path, 'external/mne'));
+
+% path to SPM
+addpath(spm_path)
 
 %% read the source space estimate and the forward model
 
@@ -62,7 +83,7 @@ source_nii.pos = round(source_pos, 3); % rounding prevents mode() failure
 
 % plot the power estimate
 cfg=[];
-cfg.mripath = mri_nii_fname;
+cfg.mripath = fullfile(base_path, mri_nii_fname);
 cfg.funparameter = 'avg.pow';
 nmt_sourceplot(cfg, source_nii);
 
@@ -70,6 +91,6 @@ nmt_sourceplot(cfg, source_nii);
 
 % plot the time courses
 cfg=[];
-cfg.mripath = mri_nii_fname;
+cfg.mripath = fullfile(base_path, mri_nii_fname);
 cfg.funparameter = 'avg.mom';
 nmt_sourceplot(cfg, source_nii);
