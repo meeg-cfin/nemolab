@@ -13,7 +13,6 @@
 % Fieldtrip
 fieldtrip_path = '/path/to/fieldtrip';
 
-
 % DATA
 % Path to MNE-Python subject folder
 base_path = '/path/to/data/';  % in this case, MNE sample data were used
@@ -38,9 +37,8 @@ end
 display(sprintf('You are using Fieldtrip on path %s', ft_path));
 
 % path to Nutmegtrip and MNE externals - Fieldtrip itself not needed here
-fieldtrippathnmt = '/path/to/fieldtrip';
-addpath(fullfile(fieldtrippathnmt, 'contrib/nutmegtrip'));
-addpath(fullfile(fieldtrippathnmt, 'external/mne'));
+addpath(fullfile(fieldtrip_path, 'contrib/nutmegtrip'));
+addpath(fullfile(fieldtrip_path, 'external/mne'));
 %% Loading the BEM and constructing a Fieldtrip-like structure from it
 
 vol_mne = mne_read_bem_surfaces(fullfile(base_path, vol_fname));

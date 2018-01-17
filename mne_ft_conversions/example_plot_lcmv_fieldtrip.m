@@ -48,9 +48,8 @@ end
 display(sprintf('You are using Fieldtrip on path %s', ft_path));
 
 % path to Nutmegtrip and MNE externals - Fieldtrip itself not needed here
-fieldtrippathnmt = '/path/to/fieldtrip';
-addpath(fullfile(fieldtrippathnmt, 'contrib/nutmegtrip'));
-addpath(fullfile(fieldtrippathnmt, 'external/mne'));
+addpath(fullfile(fieldtrip_path, 'contrib/nutmegtrip'));
+addpath(fullfile(fieldtrip_path, 'external/mne'));
 
 %% read the source space estimate and the forward model
 
