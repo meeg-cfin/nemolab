@@ -32,7 +32,7 @@ if(~exist('ft_volumerealign'))
 end
 
 % convert fiducials from MEG head space to nifti space:
-fid_info.fid_coord = nut_coordtfm(fid_info.fid_coord, inv(ras2meg_tfm));
+fid_info.fid_coord = nmt_transform_coord(inv(ras2meg_tfm), fid_info.fid_coord);
 fid_info.fid_coord = fid_info.fid_coord * 1000;
 fid_info.fid_coord = nemo_convert_pyras(fid_info.fid_coord, mri_mgz, mri_nii);
 

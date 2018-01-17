@@ -39,7 +39,7 @@ source_ft.inside = logical(source_ft.inside);
 
 % dimensions
 % convert to MRI space first b/c axes are aligned here
-source_pos_mri = nut_coordtfm(source_ft.pos, inv(fwd_mne.mri_head_t.trans));
+source_pos_mri = nmt_transform_coord(inv(fwd_mne.mri_head_t.trans), source_ft.pos);
 gridres = mode(diff(source_pos_mri(:,1)));
 
 dim(1) = round((max(source_pos_mri(:,1))-min(source_pos_mri(:,1))) / gridres);

@@ -10,10 +10,10 @@
 %% specifications and path names
 
 % TOOLBOX
-% path to Nutmegtrip - Fieldtrip itself not needed here
-% fieldtrippathnmt = %'/path/to/fieldtrip';
-% addpath(fullfile(fieldtrippathnmt, 'contrib/nutmegtrip'));
-
+% path to Nutmegtrip and MNE externals - Fieldtrip itself not needed here
+fieldtrippathnmt = '/path/to/fieldtrip';
+addpath(fullfile(fieldtrippathnmt, 'contrib/nutmegtrip'));
+addpath(fullfile(fieldtrippathnmt, 'external/mne'));
 
 % DATA
 % Path to MNE-Python output folder
@@ -38,7 +38,7 @@ fwd_model = mne_read_forward_solution(fullfile(base_path, fwd_fname), false,  fa
 
 %% make the source estimate a Fieldtrip structure
 
-source_ft = convert_source_mne_ft(source_mne, fwd_model);
+source_ft = nemo_convert_pysource(source_mne, fwd_model);
 
 %% Read the MRIs
 
@@ -50,10 +50,10 @@ mri_nii = ft_read_mri(fullfile(base_path, mri_nii_fname));
 % Positions are in RAS mgz MRI space and need to go to nifti space
 ras2meg = fwd_model.mri_head_t.trans;
 ras2meg(1:3, 4) = ras2meg(1:3, 4) * 1000;  % convert to mm
-source_pos = nut_coordtfm(source_ft.pos, inv(ras2meg));
+source_pos = nmt_transform_coord(inv(ras2meg), source_ft.pos);
 source_pos = nemo_convert_pyras(source_pos, mri_mgz, mri_nii);
 % and go back to common space due to nii transform (not needed with FT plotting)
-source_pos = nut_coordtfm(source_pos, mri_nii.transform);
+source_pos = nmt_transform_coord(mri_nii.transform, source_pos);
 
 % make a copy of the source to prevent failures with multiple runs of the 
 % same script and insert converted positions
