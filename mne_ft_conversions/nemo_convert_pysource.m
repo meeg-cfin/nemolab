@@ -25,6 +25,9 @@ function source_ft = nemo_convert_pysource(source_mne, fwd_mne)
 % Author: Britta Westner
 %
 
+if(~exist('nmt_transform_coord'))
+    error('Please add the folder ./contrib/nutmegtrip of Fieldtrip to your path. Cannot find nmt_transform_coord.')
+end
 
 % initialize
 source_ft = [];

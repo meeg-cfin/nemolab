@@ -39,6 +39,7 @@ display(sprintf('You are using Fieldtrip on path %s', ft_path));
 % path to Nutmegtrip and MNE externals - Fieldtrip itself not needed here
 addpath(fullfile(fieldtrip_path, 'contrib/nutmegtrip'));
 addpath(fullfile(fieldtrip_path, 'external/mne'));
+
 %% Loading the BEM and constructing a Fieldtrip-like structure from it
 
 vol_mne = mne_read_bem_surfaces(fullfile(base_path, vol_fname));

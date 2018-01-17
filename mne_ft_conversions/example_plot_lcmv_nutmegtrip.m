@@ -29,12 +29,10 @@ mri_mgz_fname = 'T1.mgz';  % .mgz MRI used in Freesurfer
 mri_nii_fname = 'T1.nii';  % .nii version of the above MRI, transformed with Freesurfer (mri_convert)
 fwd_fname = 'sample_2-fwd.fif';  % forward model for transform matrices and source grid
 
-
 %% read the source space estimate and the forward model
 
 source_mne = mne_read_stc_file(fullfile(base_path, source_fname));
 fwd_model = mne_read_forward_solution(fullfile(base_path, fwd_fname), false,  false )
-
 
 %% make the source estimate a Fieldtrip structure
 

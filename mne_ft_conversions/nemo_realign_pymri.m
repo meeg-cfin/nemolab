@@ -31,6 +31,11 @@ if(~exist('ft_volumerealign'))
     error('Please add FieldTrip to your path. Cannot find ft_volumerealign.')
 end
 
+
+if(~exist('nmt_transform_coord'))
+    error('Please add the folder ./contrib/nutmegtrip of Fieldtrip to your path. Cannot find nmt_transform_coord.')
+end
+
 % convert fiducials from MEG head space to nifti space:
 fid_info.fid_coord = nmt_transform_coord(inv(ras2meg_tfm), fid_info.fid_coord);
 fid_info.fid_coord = fid_info.fid_coord * 1000;
