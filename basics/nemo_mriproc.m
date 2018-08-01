@@ -19,7 +19,7 @@ switch(0)
         %% COREGISTER in NUTMEG (do this manually)
         nm
         % [ use nutmeg's coregistration GUI, then close the dialog box ]
-        global nuts; coreg = nuts.coreg; save(['s' cfgnemo.participant 'coreg.mat','coreg']);
+        global nuts; coreg = nuts.coreg; save(['s' cfgnemo.participant 'coreg.mat'],'coreg');
     case 'fieldtrip'
         %% ALTERNATIVELY COREGISTER IN FIELDTRIP
         cfgcoreg = [];
@@ -28,7 +28,7 @@ switch(0)
         fids = [mritmp.cfg.fiducial.lpa; mritmp.cfg.fiducial.rpa; mritmp.cfg.fiducial.nas]; 
         coreg.fiducials_mri_mm = nmt_transform_coord(mritmp.transformorig,fids);
         
-        save(['s' cfgnemo.participant 'coreg.mat','coreg']);
+        save(['s' cfgnemo.participant 'coreg.mat'],'coreg');
         clear mritmp
 end
 
@@ -115,7 +115,7 @@ else
             
             if(cfgnemo.plotvol)
                 figure;
-                ft_plot_sens(grad_mri);
+                ft_plot_sens(grad_mri,'coilshape','point');
                 ft_plot_mesh(bnd(1), 'facealpha', 0.25), hold on
                 ft_plot_mesh(bnd(2), 'facealpha', 0.25, 'facecolor', 'blue')
                 ft_plot_mesh(bnd(3), 'facealpha', 0.25, 'facecolor', 'yellow')
