@@ -11,39 +11,37 @@ else
             cfg.feedback              = false;
             cfg.method                = 'singleshell';
             cfg.tissue                = 'brain';
-            headmodel                       = ft_prepare_headmodel(cfg,cfgnemo.bnd(end));
-            
-            
+            headmodel                 = ft_prepare_headmodel(cfg,cfgnemo.bnd(end));
+
+
         case {'dipoli','bemcp','openmeeg'}
             cfg                       = [];
-            cfg.grad                  = cfgnemo.grad_mri;
             cfg.feedback              = false;
             cfg.method                = cfgnemo.headmodelstrategy;
-            
-            headmodel.bnd = cfgnemo.bnd;
+
             switch(cfgnemo.numlayers)
                 case 4
-                    headmodel.cond = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
-                    headmodel.cond = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
+                    cfg.conductivity = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
+                    cfg.conductivity = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
                 case 3
-                    headmodel.cond = [0.33 0.0041 0.33]; % SI units, ignore CSF
-                    % headmodel.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+                    cfg.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
+                    % headmodel.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
             end
-            
-            headmodel                       = ft_prepare_headmodel(cfg,cfgnemo.bnd);
-            
-            
+
+            headmodel                = ft_prepare_headmodel(cfg, cfgnemo.bnd);
+
+
         case 'openmeeg-old'
             cfg                       = [];
             subjId = [cfgnemo.participant '_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
             headmodel.bnd = cfgnemo.bnd;
             switch(cfgnemo.numlayers)
                 case 4
-                    headmodel.cond = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
-                    headmodel.cond = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
+                    headmodel.conductivity = [0.33 0.0041 1.79 0.33]; % SI units, all 4 layers
+                    headmodel.conductivity = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
                 case 3
-                    headmodel.cond = [0.33 0.0041 0.33]; % SI units, ignore CSF
-                    %                headmodel.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+                    headmodel.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
+                    %                headmodel.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
             end
             headmodel.type = cfgnemo.headmodelstrategy;
             headmodel.basefile = subjId;
@@ -60,18 +58,18 @@ else
                     cfg.conductivity = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
                 case 3
                     cfg.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
-                    %                headmodel.cond = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+                    %                headmodel.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
             end
             headmodel.type = cfgnemo.headmodelstrategy;
             headmodel = ft_convert_units(headmodel,'mm');    % Convert bnd to SI units
             headmodel = ft_prepare_headmodel(cfg,headmodel.bnd);
-            
+
     end
-    
+
     save([cfgnemo.participant '_headmodel.mat'],'headmodel');
 end
 
-        
+
 %% plotting the headmodel
 if(cfgnemo.plotvol)
     for ii=1:length(headmodel)
@@ -115,14 +113,13 @@ end
 
 if(cfgnemo.VOeyes) % add eyes to "inside" grid
     cfg.grid = ft_prepare_sourcemodel(cfg); % this computes the grid.inside manually
-    
+
     [x,y,z]=meshgrid(-50:50,45:75,-55:-25); % corresponds to eye region in MNI
     eye_xyz = [x(:) y(:) z(:)];
-    
+
     [~,eye_idx]=intersect(cfgnemo.sourcemodel.pos,eye_xyz,'rows');
     cfg.grid.inside(eye_idx) = 1;
 end
 
 % cfg.channel = cfgnemo.megchans;  % this is necessary if using cfg.normalize = 'yes' or 'column'!!!!
 grid               = ft_prepare_leadfield(cfg);
-
