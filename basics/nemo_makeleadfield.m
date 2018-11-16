@@ -43,7 +43,6 @@ else
                     headmodel.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
                     %                headmodel.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
             end
-            headmodel.type = cfgnemo.headmodelstrategy;
             headmodel.basefile = subjId;
             headmodel.path = ['./' subjId '/hm/openmeeg_out']; % following files in here can be reused: hm.bin, hm_inv.bin, dsm.bin
             headmodel = ft_convert_units(headmodel,'mm');    % Convert bnd to SI units
@@ -62,14 +61,14 @@ else
                     cfg.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
                     %                cfg.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
             end
-            cfg.type = cfgnemo.headmodelstrategy;
             headmodel = ft_convert_units(headmodel, 'mm');    % Convert bnd to SI units
             headmodel = ft_prepare_headmodel(cfg, headmodel.bnd);
 
     end
-
+    headmodel.type = cfgnemo.headmodelstrategy;  % bookkeeping of method used
     save([cfgnemo.participant '_headmodel.mat'],'headmodel');
 end
+
 
 
 %% plotting the headmodel
