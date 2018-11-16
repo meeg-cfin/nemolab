@@ -25,14 +25,14 @@ else
                     cfg.conductivity = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
                 case 3
                     cfg.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
-                    % headmodel.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+                    % cfg.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
             end
 
             headmodel                = ft_prepare_headmodel(cfg, cfgnemo.bnd);
 
 
         case 'openmeeg-old'
-            cfg                       = [];
+            % here we construct a headmodel from scratch without Fieldtrip
             subjId = [cfgnemo.participant '_' cfgnemo.segmethod '_' num2str(cfgnemo.numlayers) 'layer'];
             headmodel.bnd = cfgnemo.bnd;
             switch(cfgnemo.numlayers)
@@ -47,6 +47,8 @@ else
             headmodel.basefile = subjId;
             headmodel.path = ['./' subjId '/hm/openmeeg_out']; % following files in here can be reused: hm.bin, hm_inv.bin, dsm.bin
             headmodel = ft_convert_units(headmodel,'mm');    % Convert bnd to SI units
+
+
         case 'simbio'
             cfg                       = [];
             cfg.method = 'simbio';
@@ -58,11 +60,11 @@ else
                     cfg.conductivity = [0.33 0.022 1.79 0.33]; % SI units, all 4 layers % <- from Oostendorp
                 case 3
                     cfg.conductivity = [0.33 0.0041 0.33]; % SI units, ignore CSF
-                    %                headmodel.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
+                    %                cfg.conductivity = [0.33 0.022 0.33]; % SI units, ignore CSF % <- from Oostendorp
             end
-            headmodel.type = cfgnemo.headmodelstrategy;
-            headmodel = ft_convert_units(headmodel,'mm');    % Convert bnd to SI units
-            headmodel = ft_prepare_headmodel(cfg,headmodel.bnd);
+            cfg.type = cfgnemo.headmodelstrategy;
+            headmodel = ft_convert_units(headmodel, 'mm');    % Convert bnd to SI units
+            headmodel = ft_prepare_headmodel(cfg, headmodel.bnd);
 
     end
 
