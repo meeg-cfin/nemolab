@@ -9,7 +9,8 @@ eta = [etax(:) etay(:) etaz(:)]';
 %%
 clear stat
 %dat.W = inv(dat.L' * dat.invCy * dat.L) * dat.L' * dat.invCy;
-parfor ii=1:size(eta,2)
+%parfor ii=1:size(eta,2)
+for ii=1:size(eta,2)
      [stat(ii)] = nemo_spatfilt_snpm(cfg,dat,eta(:,ii));
 end
 zval = [stat(:).zval];

@@ -1,31 +1,20 @@
-% user-defined options:
-% data/MRI location
-% freqbands: frequency bands of interest
-% cfgnemo.segmethod: 'ftvolseg' or 'spm8newseg' or ???
-% voxelgridtype: 'mni-ft' is the only smart option :-)
-% tfstats: hilbert stats on/off (can require lots of RAM!!)
-% cfgnemo.headmodelstrategy: 'singleshell', 'openmeeg', 'dipoli', etc.
-% cfgnemo.numlayers: number of layers for MRI segmentation (3 or 4 is typical)
-%
+% NEMO Hilbert Source Localization pipeline template
 %
 % NOTES
-% **** In contrast to 'typical' FieldTrip pipelines, the MEG/EEG is coregistered to the MRI, rather than vice versa
+% **** In contrast to 'typical' FieldTrip pipelines, the MEG/EEG is
+%      coregistered to the MRI, rather than vice versa. This is done so
+%      that the same participant has a consistent reference MRI, coordinate
+%      space, and voxel coordinates, even if sensor positions change across
+%      different datasets. It also allows computationally intensive forward
+%      models (e.g. BEM or FEM) to be computed once per participant and
+%      simply reused with different sensor positions or VOI selections
 % * Below, a simple Butterworth bandpass is applied, for a quick first look
 %   Final results should use sequential lowpass/highpass FIR filters!!
 %
 % TODO
-% - investigate whether cfg.precision = 'single' can save memory without causing problems!
-% - *** CHECK ITC COMPUTATION
-% - *** HOW TO HANDLE ERF COMPUTATION?? (does running it through hilbert make sense??)
 % - allow choice of reconstruction methods with simple switch (i.e., lcmv vs sloreta/dspm)
-% - allow lead field choice
-% - implement SimBio method, requires tetrahedral mesh option
-% - downsampling to save on memory/computation
-% - check that large matrices are cleared when they are no longer needed
-% - implement FilterM method
-% - compare with dipoli
 % - add transparent compatibility with EEG (i.e., pass 'elec' vs 'grad' where appropriate)
-% - allow manual SPM normalization, and save result
+% - implement SimBio method, requires tetrahedral mesh option
 % - add "block design" mode and nutmegtrip support for it
 % - for testing: create test source structures to ensure that nutmegtrip doesn't break for a particular type of data
 %                including: lead field plotting, topography plotting, etc.
@@ -34,102 +23,107 @@
 nemo_ftsetup  % add paths etc.
 
 %% user-defined parameters
+cfgnemo.participant = 'SSD';
+
 toilim = [-0.225 0.25];  % <====== MUST be customized for particular experiment!! ****************
 noiselim = [-0.75 -0.3];  % <====== MUST be customized for particular experiment!! ****************
 baselinewindow = [-0.225 -0.005];  % <====== MUST be customized for particular experiment!! ****************
 activewindow = [0.005 0.225];  % <====== MUST be customized for particular experiment!! ****************
+
 % first band can be wideband; e.g., for ERF
 %freqbands = [1 145; 8 13; 13 30; 30 45; 55 75; 75 95; 105 130; 130 145; 155 195];
-%freqbands = [1 145; 30 45; 55 75; 75 95; 105 130; 130 145; 155 195; 205 245; 255 295];
 freqbands = [55 75; 75 95; 105 130; 130 145];
-%freqbands = [55 75; 75 95; 105 120; 120 145; 155 195; 205 245; 255 295; 305 345; 355 395];
-%freqbands = [1 130];
+
+cfgnemo.sourcemethod = 'lcmv';
+cfgnemo.headmodelstrategy =  'openmeeg'; % typically 'openmeeg' or 'singleshell'
+
 cfgnemo.tfstats = 1; % NB: tfstats may take lots of resources!!
 cfgnemo.statori = 0;
-cfgnemo.covmethod = 1; % 0 = 'ordinary' cov; 1 = median cov; 2 = 'robust' cov
+cfgnemo.covmethod = 0; % 0 = 'ordinary' cov; 1 = median cov; 2 = 'robust' cov
 cfgnemo.downsample = 1;
 cfgnemo.segmethod = 'ftvolseg';
-cfgnemo.voxelgridtype = 'mni-ft';
-cfgnemo.sourcemethod = 'lcmv';
-cfgnemo.headmodelstrategy =  'openmeeg'; %'simbio';
+cfgnemo.gridmethod = 'MNI';
 cfgnemo.VOeyes = 0; % include eyes in VOI
 cfgnemo.sourceplottype = 'fancy';
-
-load('standard_sourcemodel3d10mm'); % loads in sourcemodel (i.e., MNI voxel grid)
-cfgnemo.sourcemodel = ft_convert_units(sourcemodel,'mm');
-
 
 cfgnemo.numlayers = 3; % 3 for 3-layer, 4 for 4-layer
 cfgnemo.plotvol = 0; % plot surfaces with sensor positions as a check
 saveRAM = false; % try to delete mega-matrices after they're no longer needed
 
 
-%% load and resample data
-[~,cwd,ext] = fileparts(pwd); 
-cwd = [cwd ext];
-switch(cwd)
-    case 'nmt_hilbert_test_apr2016'
-        load flashes_eyeopen
-        badchans = {'-A45' '-A146' '-A147'};
-        cfgnemo.megchans = {'MEG' badchans{:}};
-        cfgnemo.ergchan = 'E37';
-        cfgnemo.participant = 'SSD';
-    case 'flashesL_CM43403'
-        load data
-        cfgnemo.megchans = {'MEG'};
-        cfgnemo.ergchan = 'E37';
-        cfgnemo.participant = 'CM';
-    case '001.flash_01_raw'
-        load data
-        badchans = {'-MEG2511'};
-        cfgnemo.ergchan = 'EOG001';
-        
-        cfgnemo.megchans = {'MEGMAG' badchans{:}};
-        cfgnemo.participant = 'SSD';
-    case {'001.flash_1ms_righteye','002.flash_1ms_lefteye','003.flash_1ms_botheyes','001.flash_1ms_botheyes','002.flash_5ms_botheyes'}
-        cfg=[];
-        datafile = dir('*.fif');
-        cfg.dataset = datafile.name;
-        cfg.channel = 'MISC001';
-        cfg.coilaccuracy = 1;
-        data=ft_preprocessing(cfg);
-        
-        [pks,pkidx]=findpeaks(data.trial{1},'MinPeakProminence',.1); %.022 for MP
-        
-        badchans = {};
-        cfgnemo.megchans = {'MEGMAG' badchans{:}};
-        cfg.trl = [pkidx'-2500 pkidx'+2500];
-        cfg.trl(:,3) = -2500;
-        % in recent datasets, "EMG" is actually "ERG"
-        cfg.channel = {'EOG001' 'EOG002' 'EMG001' 'EMG002' cfgnemo.megchans{:}};
-        cfg.dftfilter = 'no';
-        data = ft_preprocessing(cfg);
-        switch(cwd)
-            case {'001.flash_1ms_botheyes','002.flash_5ms_botheyes'}
-                cfgnemo.ergchan = 'EMG002';
-            case '001.flash_1ms_righteye'
-                cfgnemo.ergchan = 'EOG001';
-            otherwise
-                cfgnemo.ergchan = 'EOG002';
-        end
-        
-        
-        cfgnemo.participant = 'SSD';
-
-end
-megergchans = {cfgnemo.megchans{:} cfgnemo.ergchan};
+%% load standard head model in desired voxel size (e.g. 4mm, 5mm, or 10mm)
+load('standard_sourcemodel3d4mm'); % loads in sourcemodel (i.e., MNI voxel grid)
+cfgnemo.sourcemodel = ft_convert_units(sourcemodel,'mm');
 
 
-% older saved data lists the chanunit as 'unknown' for reference channels,
-% which breaks some FT functions; replace them with 'T'
-data.grad.chanunit(find(strcmp(data.grad.chanunit,'unknown')))={'T'}
 
-if(cfgnemo.downsample) % optionally downsample
-    cfg = [];
-    cfg.resamplefs = [1000];
-    data = ft_resampledata(cfg, data);
-end
 
+%% load and optionally resample data
+load flash_1ms_botheyes.mat
+
+% [~,cwd,ext] = fileparts(pwd); 
+% cwd = [cwd ext];
+% switch(cwd)
+%     case 'nmt_hilbert_test_apr2016'
+%         load flashes_eyeopen
+%         badchans = {'-A45' '-A146' '-A147'};
+%         cfgnemo.megchans = {'MEG' badchans{:}};
+%         cfgnemo.ergchan = 'E37';
+%         cfgnemo.participant = 'SSD';
+%     case 'flashesL_CM43403'
+%         load data
+%         cfgnemo.megchans = {'MEG'};
+%         cfgnemo.ergchan = 'E37';
+%         cfgnemo.participant = 'CM';
+%     case '001.flash_01_raw'
+%         load data
+%         badchans = {'-MEG2511'};
+%         cfgnemo.ergchan = 'EOG001';
+%         
+%         cfgnemo.megchans = {'MEGMAG' badchans{:}};
+%         cfgnemo.participant = 'SSD';
+%     case {'001.flash_1ms_righteye','002.flash_1ms_lefteye','003.flash_1ms_botheyes','001.flash_1ms_botheyes','002.flash_5ms_botheyes'}
+%         cfg=[];
+%         datafile = dir('*.fif');
+%         cfg.dataset = datafile.name;
+%         cfg.channel = 'MISC001';
+%         cfg.coilaccuracy = 1;
+%         data=ft_preprocessing(cfg);
+%         
+%         [pks,pkidx]=findpeaks(data.trial{1},'MinPeakProminence',.1); %.022 for MP
+%         
+%         badchans = {};
+%         cfgnemo.megchans = {'MEGMAG' badchans{:}};
+%         cfg.trl = [pkidx'-2500 pkidx'+2500];
+%         cfg.trl(:,3) = -2500;
+%         % in recent datasets, "EMG" is actually "ERG"
+%         cfg.channel = {'EOG001' 'EOG002' 'EMG001' 'EMG002' cfgnemo.megchans{:}};
+%         cfg.dftfilter = 'no';
+%         data = ft_preprocessing(cfg);
+%         switch(cwd)
+%             case {'001.flash_1ms_botheyes','002.flash_5ms_botheyes'}
+%                 cfgnemo.ergchan = 'EMG002';
+%             case '001.flash_1ms_righteye'
+%                 cfgnemo.ergchan = 'EOG001';
+%             otherwise
+%                 cfgnemo.ergchan = 'EOG002';
+%         end
+%         
+%         
+%         cfgnemo.participant = 'SSD';
+% end
+% megergchans = {cfgnemo.megchans{:} cfgnemo.ergchan};
+% 
+% 
+% % older saved data lists the chanunit as 'unknown' for reference channels,
+% % which breaks some FT functions; replace them with 'T'
+% data.grad.chanunit(find(strcmp(data.grad.chanunit,'unknown')))={'T'}
+% 
+% if(cfgnemo.downsample) % optionally downsample
+%     cfg = [];
+%     cfg.resamplefs = [1000];
+%     data = ft_resampledata(cfg, data);
+% end
 
 
 % here we filter data that is already segmented; however, it is probably
@@ -137,13 +131,9 @@ end
 
 %%
 nemo_mriproc
-%%
-grad = data.grad;  % NOTE data.hdr.grad does not contain correct information if synthetic gradient has been manipulated above
-grad_mm = ft_convert_units(grad,'mm'); % transforms the grad units (m) to the same than mri (mm)
-cfgnemo.grad_mri = ft_transform_sens(coreg.meg2mri_tfm, grad_mm); % transforms the grad coordinates to mri coordinates
-cfgnemo.grad_mri.coordsys = 'spm';
 
 %%
+cfgnemo.grad_mri = grad_mri;
 cfgnemo.bnd = bnd;
 [leadgrid,vol] = nemo_makeleadfield(cfgnemo);
 
@@ -221,8 +211,7 @@ activewindow_idx = dsearchn(datahilb{1}.time{1}',activewindow');
 
 
 
-
-%% median covariance -- you definitely don't have enough RAM to parfor this!!!!!!!!
+%% EXPERIMENTAL: median covariance -- you definitely don't have enough RAM to parfor this!!!!!!!!
 if(cfgnemo.covmethod==1)
    
     meglabels=ft_channelselection(cfgnemo.megchans,leadgrid.label);
@@ -259,41 +248,13 @@ if(cfgnemo.covmethod==1)
         timelockbp{ii}.covcon(ftmegchanid,ftmegchanid) = robustcov(dat.b(:,controlsamples)');
         timelockbp{ii}.covact(ftmegchanid,ftmegchanid) = robustcov(dat.b(:,activesamples)');
         
-
-%                 
-%         for jj=1:size(dat.b,2)
-%             dat.C(:,:,jj) = (dat.b(:,jj))*(dat.b(:,jj))';
-%         end
-%         timelockbp{ii}.cov=zeros(1,size(dat.C,1),size(dat.C,2));
-%         for jj=1:size(dat.C,1) % to save memory, loop through columns for median
-%             timelockbp{ii}.cov(1,:,jj) = median(dat.C(:,jj,:),3);
-%         end
-%         
-%         % generate covariances for active and control periods, for possible
-%         % use in orientation selection
-%         timelockbp{ii}.covact=zeros(size(timelockbp{ii}.cov));
-%         timelockbp{ii}.covcon=zeros(size(timelockbp{ii}.cov));
-%         trialstart_idx = [0:Nsamples:length(dat.b)];
-%         trialstart_idx(end) = []; % last one is too far!
-%         activesamples = [];
-%         controlsamples = [];
-%         for nn=1:length(trialstart_idx)
-%             activesamples =  [activesamples trialstart_idx(nn)+(activewindow_idx(1):activewindow_idx(2))];
-%             controlsamples =  [controlsamples trialstart_idx(nn)+(baselinewindow_idx(1):baselinewindow_idx(2))];
-%         end
-%         for jj=1:size(dat.C,1) % to save memory, loop through columns for median
-%             timelockbp{ii}.covcon(1,:,jj) = median(dat.C(:,jj,controlsamples),3);
-%         end
-%         
-%         
-        
         %     timelockbp{ii}.cov = reshape(median(dat.C,3),1,size(dat.C,1),size(dat.C,1));
         clear dat
     end
 end
 
 
-%% determine orientation based on direction that maximizes statistic
+%% EXPERIMENTAL: determine orientation based on direction that maximizes statistic
 if(cfgnemo.statori)
     if(exist('./statori.mat','file'))
         load statori
@@ -358,7 +319,7 @@ end
 
 %% create spatial filter using the non-Hilbert data
 for ii=1:size(freqbands,1)
-
+    
     cfg                   = [];
     cfg.channel           = cfgnemo.megchans;
     cfg.grid              = leadgrid; % leadfield, which has the grid information
@@ -368,21 +329,17 @@ for ii=1:size(freqbands,1)
     if strcmp(cfg.method,'sloreta')
         cfg.(cfg.method).lambda = '1000%';
     end
-     cfg.(cfg.method).reducerank   = 'no';
-     if(cfgnemo.statori)
-         cfg.grid.mom = zeros(size(cfg.grid.pos))';
-         cfg.grid.mom(:,cfg.grid.inside) = ori{ii}';
-         cfg.(cfg.method).fixedori     = 'no'; % project on axis of most variance using SVD
-     else
-         cfg.(cfg.method).fixedori = 'yes';
-     end
-     cfg.(cfg.method).projectnoise = 'yes';
-     cfg.(cfg.method).weightnorm   = 'nai'; %% NOTE: nai or lfnorm seems crucial for good performance!
-     %       cfg.(cfg.method).invCact = inv(squeeze(mean(timelockactive{ii}.cov(:,2:end,2:end),1)));
- %        cfg.(cfg.method).invCcon = inv(squeeze(mean(timelockcontrol{ii}.cov(:,2:end,2:end),1)));;
-%    cfg.(cfg.method).weightnorm   = 'naiori'; %% NOTE: nai or lfnorm seems crucial for good performance!
-%    cfg.(cfg.method).weightnorm   = 'lfnorm'; %% NOTE: nai or lfnorm seems crucial for good performance!
-%cfg.(cfg.method).lambda      = '10%';
+    cfg.(cfg.method).reducerank   = 'no';
+    if(cfgnemo.statori)
+        cfg.grid.mom = zeros(size(cfg.grid.pos))';
+        cfg.grid.mom(:,cfg.grid.inside) = ori{ii}';
+        cfg.(cfg.method).fixedori     = 'no'; % project on axis of most variance using SVD
+    else
+        cfg.(cfg.method).fixedori = 'yes';
+    end
+    cfg.(cfg.method).projectnoise = 'yes';
+    cfg.(cfg.method).weightnorm   = 'nai'; %% NOTE: nai or lfnorm seems crucial for good performance!
+    %cfg.(cfg.method).lambda      = '10%';
     cfg.(cfg.method).keepfilter   = 'yes';
     source_bp{ii}         = ft_sourceanalysis(cfg, timelockbp{ii}); % high-frequencies only
 end
@@ -474,7 +431,7 @@ cfg.lcmv.fixedori     = 'yes'; % project on axis of most variance using SVD
 cfg.lcmv.projectnoise = 'yes';
 cfg.lcmv.weightnorm   = 'nai'; %% NOTE: this is crucial for good performance!!! (noise-scaled version of old 'weightnorm')
 cfg.lcmv.keepfilter   = 'yes';
-%    cfg.lcmv.lambda     = '10%';
+%    cfg.lcmv.     = '10%';
 source_hilbtmp{ii}    = ft_sourceanalysis(cfg, timelockhilb{ii}); % high-frequencies only
 end
 
