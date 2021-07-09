@@ -22,7 +22,7 @@ phvar=squeeze(circ_var(aph,[],[],1));
 
 aamean=squeeze(mean(aa,1)); % Hilbert analytic amplitude
 aabaseline = mean(aamean(:,baselinewindow_idx(1):baselinewindow_idx(2)),2);
-aameannorm = 20*log10(diag(1./aabaseline)*aamean);  % normalize against baseline
+aameannorm = 20*log10(aabaseline./aamean);  % normalize against baseline
 
 % create a dummy tlk structure to use for output storing
 data_hilbert{ii} = ft_timelockanalysis([], data_hilb_bp{ii}); % initialize source_hilb
