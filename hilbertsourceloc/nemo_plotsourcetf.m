@@ -11,8 +11,8 @@ normmripath = [basepath '/ws' cfgnemo.participant '.nii'];
 cfg = [];
 cfg.atlas = ft_read_atlas('ROI_MNI_V4.nii'); % AAL atlas
 cfg.mripath = normmripath;
-
 inside_idx = find(source_tf.inside);
+cfg.inside_idx = inside_idx;
 
 if(~exist('cfgnemo','var'))
     cfgnemo.sourceplottype = 'fancy';
@@ -24,15 +24,15 @@ switch(cfgnemo.sourceplottype)
         cfg.mripath = normmripath;
         cfg.funparameter = 'avg.mom';
         cfg.evokedoverlay = 1;
-        % cfg.plottype = 'ts';  % if you want to view as time series instead
+    %    cfg.plottype = 'ts';  % if you want to view as time series instead
         nmt_sourceplot(cfg,source_tf);
         
     case 'fancy'
         %% fancy plotting with thresholding (e.g. with p-value)
-        cfg.funparameter = {'itc','stat'};
+        cfg.funparameter = {'mom','stat'};
         cfg.maskparameter = 'msk';
         masktype = 'pval';  % masktypes: pval, momhigh, momlow, momabs, itchigh, itclow, pow
-        maskthresh = log10(.001); for pval masktype, this should be log(pval)
+        maskthresh = log10(.005); % for pval masktype, this should be log(pval)
         
         if(isfield(source_tf,'dim'))
             % FIXME: source_tf_avg contains "dim", but others don't. this confuses

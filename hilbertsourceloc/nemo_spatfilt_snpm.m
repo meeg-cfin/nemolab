@@ -1,14 +1,15 @@
-function [stats,w] = nemo_spatfilt_snpm(cfg,dat,eta,N);
+function [stats,w] = nemo_spatfilt_snpm(cfg,dat,eta);
 % cfg requires:
 %      method = 'lcmv' or 'minnorm'
 %      stat = 'ranksum' 'ranksumactive' 'signrank' 'signrankactive'
 % dat requires:
-%      b
 %      L
 %      invC
+
+%      b (for signrank*)
 %      cfg.t_idx (for ranksum or signrank)
-%      controlwin
-%      activewin
+%      controlwin (for signrankactive)
+%      activewin (for signrankactive)
 
 
 lf = dat.L * eta;
@@ -41,6 +42,10 @@ end
  
 
 switch(cfg.stat)
+    case 'nai'
+            wnai = w / sqrt(w*w');
+            stats.zval = wnai * dat.C * wnai';
+            pval = 0;
     case 'powrat'
         stats.zval = (w * dat.Cact * w')/(w * dat.Ccon * w');
         pval = 0;

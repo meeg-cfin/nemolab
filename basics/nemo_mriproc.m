@@ -14,23 +14,27 @@ mri = ft_read_mri(mripath,'dataformat','nifti');
 mri.coordsys = 'spm';
 
 %% coregistration (copy and paste below your preferred block below, and do this manually)
-switch(0)
-    case 'nutmeg'
-        %% COREGISTER in NUTMEG (do this manually)
-        nm
-        % [ use nutmeg's coregistration GUI, then close the dialog box ]
-        global nuts; coreg = nuts.coreg; save(['s' cfgnemo.participant 'coreg.mat'],'coreg');
-    case 'fieldtrip'
-        %% ALTERNATIVELY COREGISTER IN FIELDTRIP
-        cfgcoreg = [];
-        cfgcoreg.method = 'interactive';
-        mritmp = ft_volumerealign(cfgcoreg,mri);
-        fids = [mritmp.cfg.fiducial.lpa; mritmp.cfg.fiducial.rpa; mritmp.cfg.fiducial.nas]; 
-        coreg.fiducials_mri_mm = nmt_transform_coord(mritmp.transformorig,fids);
-        
-        save(['s' cfgnemo.participant 'coreg.mat'],'coreg');
-        clear mritmp
+if(exist(['s' cfgnemo.participant 'coreg.mat'],'file'))
+   load(['s' cfgnemo.participant 'coreg.mat']);
+else
+    cfgcoreg = [];
+    cfgcoreg.method = 'interactive';
+    cfgcoreg.viewmode = 'surface';
+    mritmp = ft_volumerealign(cfgcoreg,mri);
+    fids = [mritmp.cfg.fiducial.lpa; mritmp.cfg.fiducial.rpa; mritmp.cfg.fiducial.nas];
+    coreg.fiducials_mri_mm = nmt_transform_coord(mritmp.transformorig,fids);
+    
+    save(['s' cfgnemo.participant 'coreg.mat'],'coreg');
+    clear mritmp
 end
+
+%% ALTERNATIVELY COREGISTER in NUTMEG (do this manually)
+% nm
+% % [ use nutmeg's coregistration GUI, then close the dialog box ]
+% global nuts;
+% coreg = nuts.coreg;
+% save(['s' cfgnemo.participant 'coreg.mat'],'coreg');
+
 
 %% compute head coordinates based on particular MEG system's convention
 load(['s' cfgnemo.participant 'coreg.mat']);
@@ -95,8 +99,10 @@ else
             cfg.numvertices = [200 400 800 800];
             bnd = ft_prepare_mesh(cfg, seg);
         otherwise
-            cfg.method = 'iso2mesh';    % 'projectmesh';
+         % cfg.method = 'iso2mesh';    % 'projectmesh';
+          %addpath([ftpath '/external/iso2mesh']);
             cfg.numvertices = 10000;    % We'll decimate later
+            cfg.spmversion = 'spm12';
             bnd = ft_prepare_mesh(cfg, seg);
             % Mesh repairs - Not yet implemented in FT
             %    targetsize = [500 1000 1500 1500]; % final mesh size desired for layers (in order given above)
@@ -111,16 +117,16 @@ else
                 [bnd(ii).pos, bnd(ii).tri] = meshcheckrepair(bnd(ii).pos, bnd(ii).tri, 'meshfix');
             end
             % Ensure no overlaps
-            bnd = nemo_decouplesurf(bnd);
+    %        bnd = nemo_decouplesurf(bnd);
             
             if(cfgnemo.plotvol)
                 figure;
-                ft_plot_sens(grad_mri,'coilshape','point');
+                ft_plot_sens(grad_mri,'coilshape','point','style','r');
                 ft_plot_mesh(bnd(1), 'facealpha', 0.25), hold on
                 ft_plot_mesh(bnd(2), 'facealpha', 0.25, 'facecolor', 'blue')
                 ft_plot_mesh(bnd(3), 'facealpha', 0.25, 'facecolor', 'yellow')
                 if(length(bnd)>=4)
-                    ft_plot_mesh(bnd(4), 'facecolor', 'red')
+                    ft_plot_mesh(bnd(4), 'facecolor', 'green')
                 end
                 ft_plot_ortho(mri.anatomy,'transform',mri.transform,'style','intersect')
                 % plot3(grad_mri.chanpos(:,1),grad_mri.chanpos(:,2),grad_mri.chanpos(:,3),'go')

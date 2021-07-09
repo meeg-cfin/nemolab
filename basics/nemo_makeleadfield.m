@@ -123,4 +123,17 @@ if(cfgnemo.VOeyes) % add eyes to "inside" grid
 end
 
 % cfg.channel = cfgnemo.megchans;  % this is necessary if using cfg.normalize = 'yes' or 'column'!!!!
+
+switch(cfgnemo.headmodelstrategy)
+    % optionally retain huge files from computationally intensive OpenMEEG steps
+    case 'openmeeg'
+        % cfg.openmeeg.keepdsm = 'yes';
+end
+
 grid               = ft_prepare_leadfield(cfg);
+
+switch(cfgnemo.headmodelstrategy)
+    % optionally retain huge files from computationally intensive OpenMEEG steps
+    case 'openmeeg'
+        % headmodel.dsm = grid.openmeeg.dsm;
+end
